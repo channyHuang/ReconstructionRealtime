@@ -1,0 +1,251 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>16.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{94313F79-4AB6-4CA2-9B28-108AA39F8454}</ProjectGuid>
+    <RootNamespace>osgshader</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+    <IncludePath>E:\projects\osgReconRealtime;D:\boost_1_78_0;E:\thirdLibs\installers\ffmpeg-6.0\include;E:\thirdLibs\CGAL-5.4-beta1\include;E:\thirdLibs\eigen-3.4.0;E:\thirdLibs\installers\PCL\include\pcl-1.13;E:\thirdLibs\installers\OpenSceneGraph\include;E:\thirdLibs\imgui\examples\libs\glfw\include;E:\thirdLibs\installers\opencv-3.4.6-installer\include;E:\projects\AllOsgProj\commonClass;E:\projects\osgReconRealtime\meshing;E:\projects\osgReconRealtime\tools;E:\projects\osgReconRealtime\rgb_map;E:\projects\osgReconRealtime\loam\include;E:\thirdLibs\installers\flann\include;$(IncludePath)</IncludePath>
+    <LibraryPath>E:\thirdLibs\installers\OpenSceneGraph\lib;E:\thirdLibs\imgui\examples\libs\glfw\lib-vc2010-64;E:\thirdLibs\installers\opencv-3.4.6-installer\x64\vc16\lib;D:\boost_1_78_0\lib64-msvc-14.2;E:\thirdLibs\installers\PCL\lib;E:\thirdLibs\installers\ffmpeg-6.0\lib;$(LibraryPath)</LibraryPath>
+    <OutDir>$(SolutionDir)\..\AllOsgProj\bin\</OutDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+    <IncludePath>E:\projects\osgReconRealtime;D:\boost_1_78_0;E:\thirdLibs\installers\ffmpeg-6.0\include;E:\thirdLibs\CGAL-5.4-beta1\include;E:\thirdLibs\eigen-3.4.0;E:\thirdLibs\installers\PCL\include\pcl-1.13;E:\thirdLibs\installers\OpenSceneGraph\include;E:\thirdLibs\imgui\examples\libs\glfw\include;E:\thirdLibs\installers\opencv-3.4.6-installer\include;E:\projects\AllOsgProj\commonClass;E:\projects\osgReconRealtime\meshing;E:\projects\osgReconRealtime\tools;E:\projects\osgReconRealtime\rgb_map;E:\projects\osgReconRealtime\loam\include;E:\thirdLibs\installers\flann\include;$(IncludePath)</IncludePath>
+    <LibraryPath>E:\thirdLibs\installers\OpenSceneGraph\lib;E:\thirdLibs\imgui\examples\libs\glfw\lib-vc2010-64;E:\thirdLibs\installers\opencv-3.4.6-installer\x64\vc16\lib;D:\boost_1_78_0\lib64-msvc-14.2;E:\thirdLibs\installers\PCL\lib;E:\thirdLibs\installers\ffmpeg-6.0\lib;$(LibraryPath)</LibraryPath>
+    <OutDir>$(SolutionDir)\..\AllOsgProj\bin\</OutDir>
+    <IntDir>$(SolutionDir)\..\AllOsgProj\$(Platform)\$(ProjectName)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;_USE_BOOST;_USE_EIGEN;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>opengl32.lib;glfw3.lib;osgd.lib;osgUtild.lib;osgGAd.lib;osgDBd.lib;osgViewerd.lib;opencv_calib3d346d.lib;opencv_core346d.lib;opencv_dnn346d.lib;opencv_features2d346d.lib;opencv_flann346d.lib;opencv_highgui346d.lib;opencv_imgcodecs346d.lib;opencv_imgproc346d.lib;opencv_ml346d.lib;opencv_objdetect346d.lib;opencv_shape346d.lib;opencv_video346d.lib;opencv_videoio346d.lib;pcl_common.lib;pcl_features.lib;pcl_filters.lib;pcl_io.lib;pcl_io_ply.lib;pcl_kdtree.lib;pcl_keypoints.lib;pcl_ml.lib;pcl_octree.lib;pcl_recognition.lib;pcl_registration.lib;avcodec.lib;avdevice.lib;avfilter.lib;avformat.lib;avutil.lib;postproc.lib;swresample.lib;swscale.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;_USE_BOOST;_USE_EIGEN;_SILENCE_CXX17_RESULT_OF_DEPRECATION_WARNING;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>Default</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>opengl32.lib;opencv_calib3d346.lib;opencv_core346.lib;opencv_dnn346.lib;opencv_features2d346.lib;opencv_flann346.lib;opencv_highgui346.lib;opencv_imgcodecs346.lib;opencv_imgproc346.lib;opencv_ml346.lib;opencv_objdetect346.lib;opencv_photo346.lib;opencv_shape346.lib;opencv_stitching346.lib;opencv_superres346.lib;opencv_video346.lib;opencv_videoio346.lib;opencv_videostab346.lib;pcl_common.lib;pcl_features.lib;pcl_filters.lib;pcl_io.lib;pcl_io_ply.lib;pcl_kdtree.lib;pcl_keypoints.lib;pcl_ml.lib;pcl_octree.lib;pcl_recognition.lib;pcl_registration.lib;glfw3.lib;osg.lib;osgDB.lib;osgUtil.lib;osgGA.lib;osgViewer.lib;avcodec.lib;avdevice.lib;avfilter.lib;avformat.lib;avutil.lib;postproc.lib;swresample.lib;swscale.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\AllOsgProj\commonClass\commonOsg\commonOsg.cpp" />
+    <ClCompile Include="..\AllOsgProj\commonClass\commonOsg\OsgImguiHandler.cpp" />
+    <ClCompile Include="..\AllOsgProj\commonClass\imgui\imgui.cpp" />
+    <ClCompile Include="..\AllOsgProj\commonClass\imgui\imgui_custom_widgets.cpp" />
+    <ClCompile Include="..\AllOsgProj\commonClass\imgui\imgui_demo.cpp" />
+    <ClCompile Include="..\AllOsgProj\commonClass\imgui\imgui_draw.cpp" />
+    <ClCompile Include="..\AllOsgProj\commonClass\imgui\imgui_impl_glfw.cpp" />
+    <ClCompile Include="..\AllOsgProj\commonClass\imgui\imgui_impl_opengl3.cpp" />
+    <ClCompile Include="..\AllOsgProj\commonClass\imgui\imgui_tables.cpp" />
+    <ClCompile Include="..\AllOsgProj\commonClass\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="ImguiMainPage.cpp" />
+    <ClCompile Include="loam\IMU_Processing.cpp" />
+    <ClCompile Include="loam\include\kd_tree\ikd_Tree.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="meshing\MVS\Camera.cpp" />
+    <ClCompile Include="meshing\MVS\Common\Common.cpp" />
+    <ClCompile Include="meshing\MVS\Common\Timer.cpp" />
+    <ClCompile Include="meshing\MVS\Common\Types.cpp" />
+    <ClCompile Include="meshing\MVS\IBFS.cpp" />
+    <ClCompile Include="meshing\MVS\Image.cpp" />
+    <ClCompile Include="meshing\MVS\Mesh.cpp" />
+    <ClCompile Include="meshing\MVS\OBJ.cpp" />
+    <ClCompile Include="meshing\MVS\Platform.cpp" />
+    <ClCompile Include="meshing\MVS\PointCloud.cpp" />
+    <ClCompile Include="optical_flow\lkpyramid.cpp" />
+    <ClCompile Include="osgManager.cpp" />
+    <ClCompile Include="parseBag.cpp" />
+    <ClCompile Include="r3live.cpp" />
+    <ClCompile Include="r3live_lio.cpp" />
+    <ClCompile Include="r3live_vio.cpp" />
+    <ClCompile Include="reconstruct.cpp" />
+    <ClCompile Include="rgb_map\image_frame.cpp" />
+    <ClCompile Include="rgb_map\offline_map_recorder.cpp" />
+    <ClCompile Include="rgb_map\pointcloud_rgbd.cpp" />
+    <ClCompile Include="rgb_map\rgbmap_tracker.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\AllOsgProj\commonClass\commonOsg\commonFunc.h" />
+    <ClInclude Include="..\AllOsgProj\commonClass\commonOsg\commonOsg.h" />
+    <ClInclude Include="..\AllOsgProj\commonClass\commonOsg\OsgImguiHandler.h" />
+    <ClInclude Include="..\AllOsgProj\commonClass\commonOsg\osgPickHandler.h" />
+    <ClInclude Include="..\AllOsgProj\commonClass\imgui\imconfig.h" />
+    <ClInclude Include="..\AllOsgProj\commonClass\imgui\imgui.h" />
+    <ClInclude Include="..\AllOsgProj\commonClass\imgui\imgui_impl_glfw.h" />
+    <ClInclude Include="..\AllOsgProj\commonClass\imgui\imgui_impl_opengl3.h" />
+    <ClInclude Include="..\AllOsgProj\commonClass\imgui\imgui_impl_opengl3_loader.h" />
+    <ClInclude Include="..\AllOsgProj\commonClass\imgui\imgui_internal.h" />
+    <ClInclude Include="..\AllOsgProj\commonClass\imgui\imstb_rectpack.h" />
+    <ClInclude Include="..\AllOsgProj\commonClass\imgui\imstb_textedit.h" />
+    <ClInclude Include="..\AllOsgProj\commonClass\imgui\imstb_truetype.h" />
+    <ClInclude Include="ffmpeg-filter.h" />
+    <ClInclude Include="ImguiMainPage.h" />
+    <ClInclude Include="loam\IMU_Processing.hpp" />
+    <ClInclude Include="loam\include\kd_tree\ikd_Tree.h" />
+    <ClInclude Include="meshing\build_mesh.hpp" />
+    <ClInclude Include="meshing\MVS\Camera.h" />
+    <ClInclude Include="meshing\MVS\Common.h" />
+    <ClInclude Include="meshing\MVS\Common\Common.h" />
+    <ClInclude Include="meshing\MVS\Common\Config.h" />
+    <ClInclude Include="meshing\MVS\Common\Timer.h" />
+    <ClInclude Include="meshing\MVS\Common\Types.h" />
+    <ClInclude Include="meshing\MVS\IBFS.h" />
+    <ClInclude Include="meshing\MVS\Image.h" />
+    <ClInclude Include="meshing\MVS\Mesh.h" />
+    <ClInclude Include="meshing\MVS\OBJ.h" />
+    <ClInclude Include="meshing\MVS\Platform.h" />
+    <ClInclude Include="meshing\MVS\PointCloud.h" />
+    <ClInclude Include="messageStruct.h" />
+    <ClInclude Include="optical_flow\lkpyramid.hpp" />
+    <ClInclude Include="osgManager.h" />
+    <ClInclude Include="parseBag.h" />
+    <ClInclude Include="r3live.hpp" />
+    <ClInclude Include="reconstruct.h" />
+    <ClInclude Include="rgb_map\image_frame.hpp" />
+    <ClInclude Include="rgb_map\offline_map_recorder.hpp" />
+    <ClInclude Include="rgb_map\pointcloud_rgbd.hpp" />
+    <ClInclude Include="rgb_map\rgbmap_tracker.hpp" />
+    <ClInclude Include="signalSlots.h" />
+    <ClInclude Include="tools\lib_sophus\common.hpp" />
+    <ClInclude Include="tools\lib_sophus\formatstring.hpp" />
+    <ClInclude Include="tools\lib_sophus\rotation_matrix.hpp" />
+    <ClInclude Include="tools\lib_sophus\se2.hpp" />
+    <ClInclude Include="tools\lib_sophus\so2.hpp" />
+    <ClInclude Include="tools\lib_sophus\so3.hpp" />
+    <ClInclude Include="tools\lib_sophus\types.hpp" />
+    <ClInclude Include="tools\os_compatible.hpp" />
+    <ClInclude Include="tools\tools_color_printf.hpp" />
+    <ClInclude Include="tools\tools_data_io.hpp" />
+    <ClInclude Include="tools\tools_eigen.hpp" />
+    <ClInclude Include="tools\tools_kd_hash.hpp" />
+    <ClInclude Include="tools\tools_mem_used.h" />
+    <ClInclude Include="tools\tools_openCV_3_to_4.hpp" />
+    <ClInclude Include="tools\tools_serialization.hpp" />
+    <ClInclude Include="tools\tools_thread_pool.hpp" />
+    <ClInclude Include="tools\tools_timer.hpp" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

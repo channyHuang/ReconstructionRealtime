@@ -1,6 +1,8 @@
 #include "parseBag.h"
 
 #include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgcodecs/imgcodecs.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 #include "ffmpeg-filter.h"
 
 ParseBag* ParseBag::instance = nullptr;
@@ -269,7 +271,7 @@ int ParseBag::readImage(std::ifstream& ifs) {
         }
     }
 
-    msg->imageView = cv::imdecode(imgdata, CV_LOAD_IMAGE_COLOR);
+    msg->imageView = cv::imdecode(imgdata, 1);
     //imageFilter(msg->imageView);
     notifyImage(msg);
 

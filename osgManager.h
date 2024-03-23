@@ -27,9 +27,10 @@ public:
 	~OsgManager();
 
 	void setViewer(osgViewer::Viewer& viewer);
-	void show(const std::string& str, bool braw = true);
+	void show();
 	void switchScene();
 	void updatePoints(const std::vector<std::vector<double>>& pts);
+	void updatePoints(osg::ref_ptr<osg::Geometry> geomPoints);
 	void updatePose(double x, double y, double z, double w, double tx, double ty, double tz);
 public:
 
@@ -40,7 +41,7 @@ private:
 	static OsgManager* instance;
 
 	osg::ref_ptr<osg::Group> root = nullptr;
-	osg::ref_ptr<osg::Group> rootWireTerrain = nullptr;
+	osg::ref_ptr<osg::Geometry> pathGeom = nullptr;
 	osg::ref_ptr<osg::Group> sunLight = nullptr;
 	osg::ref_ptr<osg::Group> rootGeomTerrain = nullptr;
 	osg::ref_ptr<osgViewer::Viewer> pviewer = nullptr;

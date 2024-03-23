@@ -177,10 +177,7 @@ bool Image_frame::if_2d_points_available(const double &u, const double &v, const
     {
         return true;
     }
-    else
-    {
-        return false;
-    }
+    return false;
 }
 
 template<typename T>

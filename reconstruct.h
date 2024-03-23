@@ -9,7 +9,7 @@
 #include <pcl/io/obj_io.h>
 #include <pcl/kdtree/kdtree_flann.h>
 
-#include <boost/program_options.hpp>
+//#include <boost/program_options.hpp>
 #include "meshing/MVS/Common.h"
 #include "meshing/MVS/Image.h"
 #include "meshing/MVS/PointCloud.h"
@@ -29,18 +29,19 @@ public:
 
     ~Reconstruction() {}
 
-    int reconstruct_main();
+    int reconFromRecorder(Offline_map_recorder& r3live_map_recorder);
+    int reconFromFile(const std::string& file);
+
     MVS::Mesh reconstruct_mesh(Offline_map_recorder& r3live_map_recorder, std::string output_dir);
     void r3live_map_to_mvs_scene(Offline_map_recorder& r3live_map_recorder, MVS::ImageArr& m_images, MVS::PointCloud& m_pointcloud);
     bool ReconstructMesh(float distInsert, bool bUseFreeSpaceSupport, unsigned nItersFixNonManifold, float kSigma, float kQual, MVS::Mesh& m_mesh, MVS::ImageArr& m_images, MVS::PointCloud& m_pointcloud);
-    int reconstruct_points();
 
 public:
     SignalSlot::Signal<void(float x, float y, float z, float r, float g, float b)> notifyPoint;
     SignalSlot::Signal<void(std::vector<std::vector<double>> p)> notifyPoints;
     SignalSlot::Signal<void(float x, float y, float z, float w, float tx, float ty, float tz)> notifyPose;
     SignalSlot::Signal<void(int idx1, int idx2)> notifyEdge;
-    SignalSlot::Signal<void(std::vector<std::vector<double>> p)> notifyFaces;
+    SignalSlot::Signal<void(std::string str, bool b)> notifyFinish;
 
 private:
     Reconstruction();

@@ -36,7 +36,6 @@ ImuProcess::~ImuProcess()
 
 void ImuProcess::Reset()
 {
-    //ROS_WARN( "Reset ImuProcess" );
     angvel_last = Zero3d;
     cov_proc_noise = Eigen::Matrix< double, DIM_OF_PROC_N, 1 >::Zero();
 
@@ -63,7 +62,6 @@ void ImuProcess::IMU_Initial( const MeasureGroup &meas, StatesGroup &state_inout
 {
     /** 1. initializing the gravity, gyro bias, acc and gyro covariance
      ** 2. normalize the acceleration measurenments to unit gravity **/
-    //ROS_INFO( "IMU Initializing: %.1f %%", double( N ) / MAX_INI_COUNT * 100 );
     Eigen::Vector3d cur_acc, cur_gyr;
 
     if ( b_first_frame_ )
@@ -85,8 +83,6 @@ void ImuProcess::IMU_Initial( const MeasureGroup &meas, StatesGroup &state_inout
 
         cov_acc = cov_acc * ( N - 1.0 ) / N + ( cur_acc - mean_acc ).cwiseProduct( cur_acc - mean_acc ) * ( N - 1.0 ) / ( N * N );
         cov_gyr = cov_gyr * ( N - 1.0 ) / N + ( cur_gyr - mean_gyr ).cwiseProduct( cur_gyr - mean_gyr ) * ( N - 1.0 ) / ( N * N );
-        // cov_acc = Eigen::Vector3d(0.1, 0.1, 0.1);
-        // cov_gyr = Eigen::Vector3d(0.01, 0.01, 0.01);
         N++;
     }
 
@@ -430,16 +426,10 @@ void ImuProcess::lic_point_cloud_undistort( const MeasureGroup &meas, const Stat
 
 void ImuProcess::Process( const MeasureGroup &meas, StatesGroup &stat, PointCloudXYZINormal::Ptr cur_pcl_un_ )
 {
-    // double t1, t2, t3;
-    // t1 = omp_get_wtime();
-
     if ( meas.imu.empty() )
     {
-        // std::cout << "no imu data" << std::endl;
         return;
     };
-    //ROS_ASSERT( meas.lidar != nullptr );
-
     if ( imu_need_init_ )
     {
         /// The very first lidar frame
@@ -452,11 +442,6 @@ void ImuProcess::Process( const MeasureGroup &meas, StatesGroup &stat, PointClou
         if ( init_iter_num > MAX_INI_COUNT )
         {
             imu_need_init_ = false;
-            // std::cout<<"mean acc: "<<mean_acc<<" acc measures in word frame:"<<state.rot_end.transpose()*mean_acc<<std::endl;
-            //ROS_INFO(
-                //"IMU Initials: Gravity: %.4f %.4f %.4f; state.bias_g: %.4f %.4f %.4f; acc covarience: %.8f %.8f %.8f; gry covarience: %.8f %.8f %.8f",
-                //stat.gravity[ 0 ], stat.gravity[ 1 ], stat.gravity[ 2 ], stat.bias_g[ 0 ], stat.bias_g[ 1 ], stat.bias_g[ 2 ], cov_acc[ 0 ],
-                //cov_acc[ 1 ], cov_acc[ 2 ], cov_gyr[ 0 ], cov_gyr[ 1 ], cov_gyr[ 2 ] );
         }
 
         return;
@@ -482,11 +467,5 @@ void ImuProcess::Process( const MeasureGroup &meas, StatesGroup &stat, PointClou
         }
         lic_state_propagate( meas, stat );
     }
-    // t2 = omp_get_wtime();
-
     last_imu_ = meas.imu.back();
-
-    // t3 = omp_get_wtime();
-
-    // std::cout<<"[ IMU Process ]: Time: "<<t3 - t1<<std::endl;
 }

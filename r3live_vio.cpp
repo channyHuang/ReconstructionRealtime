@@ -46,13 +46,10 @@ Dr. Fu Zhang < fuzhang@hku.hk >.
  POSSIBILITY OF SUCH DAMAGE.
 */
 #include "r3live.hpp"
-// #include "photometric_error.hpp"
 #include "tools_mem_used.h"
-//#include "tools_logger.hpp"
 
 #include "osgManager.h"
 
-//Common_tools::Cost_time_logger              g_cost_time_logger;
 std::shared_ptr< Common_tools::ThreadPool > m_thread_pool_ptr;
 double                                      g_vio_frame_cost_time = 0;
 double                                      g_lio_frame_cost_time = 0;
@@ -197,16 +194,11 @@ void R3LIVE::set_initial_camera_parameter( StatesGroup &state, double *intrinsic
                                            double *imu_camera_ext_t, double cam_k_scale )
 {
     scope_color( ANSI_COLOR_YELLOW_BOLD );
-    // g_cam_K << 863.4241 / cam_k_scale, 0, 625.6808 / cam_k_scale,
-    //     0, 863.4171 / cam_k_scale, 518.3392 / cam_k_scale,
-    //     0, 0, 1;
-
     g_cam_K << intrinsic_data[ 0 ] / cam_k_scale, intrinsic_data[ 1 ], intrinsic_data[ 2 ] / cam_k_scale, intrinsic_data[ 3 ],
         intrinsic_data[ 4 ] / cam_k_scale, intrinsic_data[ 5 ] / cam_k_scale, intrinsic_data[ 6 ], intrinsic_data[ 7 ], intrinsic_data[ 8 ];
     g_cam_dist = Eigen::Map< Eigen::Matrix< double, 5, 1 > >( camera_dist_data );
     state.rot_ext_i2c = Eigen::Map< Eigen::Matrix< double, 3, 3, Eigen::RowMajor > >( imu_camera_ext_R );
     state.pos_ext_i2c = Eigen::Map< Eigen::Matrix< double, 3, 1 > >( imu_camera_ext_t );
-    // state.pos_ext_i2c.setZero();
 
     // Lidar to camera parameters.
     m_mutex_lio_process.lock();
@@ -223,15 +215,11 @@ void R3LIVE::set_initial_camera_parameter( StatesGroup &state, double *intrinsic
 
 void R3LIVE::publish_track_img( cv::Mat &img, double frame_cost_time = -1 )
 {
-    //cv_bridge::CvImage out_msg;
-    //out_msg.header.stamp = ros::Time::now();               // Same timestamp and tf frame as input image
-    //out_msg.encoding = sensor_msgs::image_encodings::BGR8; // Or whatever
     cv::Mat pub_image = img.clone();
     if ( frame_cost_time > 0 )
     {
         char fps_char[ 100 ];
         sprintf( fps_char, "Per-frame cost time: %.2f ms", frame_cost_time );
-        // sprintf(fps_char, "%.2f ms", frame_cost_time);
 
         if ( pub_image.cols <= 640 )
         {
@@ -244,17 +232,6 @@ void R3LIVE::publish_track_img( cv::Mat &img, double frame_cost_time = -1 )
                          0 ); // 1280 * 1080
         }
     }
-    //out_msg.image = pub_image; // Your cv::Mat
-    //pub_track_img.publish( out_msg );
-}
-
-void R3LIVE::publish_raw_img( cv::Mat &img )
-{
-    //cv_bridge::CvImage out_msg;
-    //out_msg.header.stamp = ros::Time::now();               // Same timestamp and tf frame as input image
-    //out_msg.encoding = sensor_msgs::image_encodings::BGR8; // Or whatever
-    //out_msg.image = img;                                   // Your cv::Mat
-    //pub_raw_img.publish( out_msg );
 }
 
 int        sub_image_typed = 0; // 0: TBD 1: sub_raw, 2: sub_comp
@@ -273,7 +250,6 @@ void R3LIVE::service_process_img_buffer()
         {
             while ( m_queue_image_with_pose.size() > 4 )
             {
-                //ros::spinOnce();
                 std::this_thread::sleep_for( std::chrono::milliseconds( 2 ) );
                 std::this_thread::yield();
             }
@@ -284,23 +260,14 @@ void R3LIVE::service_process_img_buffer()
         {
             while ( g_received_compressed_img_msg.size() == 0 )
             {
-                //ros::spinOnce();
                 std::this_thread::sleep_for( std::chrono::milliseconds( 1 ) );
                 std::this_thread::yield();
             }
             sensor_msgs::CompressedImageConstPtr msg = g_received_compressed_img_msg.front();
-            //try
             {
-                //cv_bridge::CvImagePtr cv_ptr_compressed = cv_bridge::toCvCopy( msg, sensor_msgs::image_encodings::BGR8 );
                 img_rec_time = msg->header.stamp.toSec();
-                //image_get = cv_ptr_compressed->image;
-                //cv_ptr_compressed->image.release();
                 msg->imageView.copyTo(image_get);
             }
-            //catch ( cv_bridge::Exception &e )
-            //{
-            //    printf( "Could not convert from '%s' to 'bgr8' !!! ", msg->format.c_str() );
-            //}
             mutex_image_callback.lock();
             g_received_compressed_img_msg.pop_front();
             mutex_image_callback.unlock();
@@ -309,12 +276,10 @@ void R3LIVE::service_process_img_buffer()
         {
             while ( g_received_img_msg.size() == 0 )
             {
-                //ros::spinOnce();
                 std::this_thread::sleep_for( std::chrono::milliseconds( 1 ) );
                 std::this_thread::yield();
             }
             sensor_msgs::ImageConstPtr msg = g_received_img_msg.front();
-            //image_get = cv_bridge::toCvCopy( msg, sensor_msgs::image_encodings::BGR8 )->image.clone();
             msg->imageView.copyTo(image_get);
             img_rec_time = msg->header.stamp.toSec();
             mutex_image_callback.lock();
@@ -358,7 +323,6 @@ void R3LIVE::image_callback( const sensor_msgs::ImageConstPtr &msg )
         m_thread_pool_ptr->commit_task( &R3LIVE::service_process_img_buffer, this );
     }
 
-    //cv::Mat temp_img = cv_bridge::toCvCopy( msg, sensor_msgs::image_encodings::BGR8 )->image.clone();
     cv::Mat temp_img = msg->imageView.clone();
     process_image( temp_img, msg->header.stamp.toSec() );
 }
@@ -391,6 +355,7 @@ void   R3LIVE::process_image( cv::Mat &temp_img, double msg_time )
     {
         m_camera_start_ros_tim = msg_time;
         m_vio_scale_factor = m_vio_image_width * m_image_downsample_ratio / temp_img.cols; // 320 * 24
+        
         // load_vio_parameters();
         set_initial_camera_parameter( g_lio_state, m_camera_intrinsic.data(), m_camera_dist_coeffs.data(), m_camera_ext_R.data(),
                                       m_camera_ext_t.data(), m_vio_scale_factor );
@@ -398,7 +363,7 @@ void   R3LIVE::process_image( cv::Mat &temp_img, double msg_time )
         cv::eigen2cv( g_cam_dist, dist_coeffs );
         initUndistortRectifyMap( intrinsic, dist_coeffs, cv::Mat(), intrinsic, cv::Size( m_vio_image_width / m_vio_scale_factor, m_vio_image_heigh / m_vio_scale_factor ),
                                  CV_16SC2, m_ud_map1, m_ud_map2 );
-        //m_thread_pool_ptr->commit_task( &R3LIVE::service_pub_rgb_maps, this);
+
         m_thread_pool_ptr->commit_task( &R3LIVE::service_VIO_update, this);
         m_mvs_recorder.init( g_cam_K, m_vio_image_width / m_vio_scale_factor, &m_map_rgb_pts );
         m_mvs_recorder.set_working_dir( m_map_output_dir );
@@ -413,16 +378,12 @@ void   R3LIVE::process_image( cv::Mat &temp_img, double msg_time )
         img_get = temp_img; // clone ?
     }
 
-    cv::Mat final_image = img_get;
-    //cv::GaussianBlur(final_image, img_get, final_image.size(), 3.0);
-
     std::shared_ptr< Image_frame > img_pose = std::make_shared< Image_frame >( g_cam_K );
     if ( m_if_pub_raw_img )
     {
         img_pose->m_raw_img = img_get;
     }
     cv::remap( img_get, img_pose->m_img, m_ud_map1, m_ud_map2, cv::INTER_LINEAR );
-    // cv::imshow("sub Img", img_pose->m_img);
     img_pose->m_timestamp = msg_time;
     img_pose->init_cubic_interpolation();
     img_pose->image_equalize();
@@ -441,21 +402,23 @@ void R3LIVE::load_vio_parameters()
 {
 
     std::vector< double > camera_intrinsic_data, camera_dist_coeffs_data, camera_ext_R_data, camera_ext_t_data;
-    //m_ros_node_handle.getParam( "r3live_vio/image_width", m_vio_image_width );
-    //m_ros_node_handle.getParam( "r3live_vio/image_height", m_vio_image_heigh );
-    //m_ros_node_handle.getParam( "r3live_vio/camera_intrinsic", camera_intrinsic_data );
-    //m_ros_node_handle.getParam( "r3live_vio/camera_dist_coeffs", camera_dist_coeffs_data );
-    //m_ros_node_handle.getParam( "r3live_vio/camera_ext_R", camera_ext_R_data );
-    //m_ros_node_handle.getParam( "r3live_vio/camera_ext_t", camera_ext_t_data );
-    camera_intrinsic_data = { 1.019725357323183e+03,  0.0,        9.530492032695936e+02,
-           0.0,         1.020588984973907e+03, 5.432658976871853e+02,
-           0.0,         0.0,        1.0 };
-    camera_dist_coeffs_data = { 0.025681217868279, -0.018056404837187, 0.0, 0.0, 0.000000 };
-    camera_ext_R_data = { -0.001046455132281, -0.999998679272604,  0.001243537173987,
-            0.226264330384285, -0.001448063248386, -0.974064862269746,
-            0.974065376516078, -7.379470683164596e-04, 0.226265546884003, };
-    camera_ext_t_data = { -0.063340671673354, -0.009431907279248, -0.108528849005723 };
-
+    //camera_intrinsic_data = { 1.019725357323183e+03,  0.0,        9.530492032695936e+02,
+    //           0.0,         1.020588984973907e+03, 5.432658976871853e+02,
+    //           0.0,         0.0,        1.0 };
+    //camera_ext_R_data = { -0.001046455132281, -0.999998679272604,  0.001243537173987,
+    //            0.226264330384285, -0.001448063248386, -0.974064862269746,
+    //            0.974065376516078, -7.379470683164596e-04, 0.226265546884003, };
+    //camera_dist_coeffs_data = { 0.025681217868279, -0.018056404837187, 0.0, 0.0, 0.000000 }; 
+    //camera_ext_t_data = { -0.063340671673354, -0.009431907279248, -0.108528849005723 };
+    // W/(2tan(fov / 2))
+    float f = m_vio_image_width / (2.0 * std::tan(PI_M / 3.0));
+    camera_intrinsic_data = { f,         0.0,         m_vio_image_width / 2.f,
+        0.0,         f,          m_vio_image_heigh / 2.f,
+        0.0,         0.0,        1.0 };
+    camera_dist_coeffs_data = { 0, 0, 0, 0, 0 };
+    //camera_ext_R_data = { 0, 1, 0, 0, 0, 1, 1, 0, 0 };
+    camera_ext_R_data = { 0, 1, 0, -sin(osg::PI / 4), 0, cos(osg::PI / 4), cos(osg::PI / 4), 0, sin(osg::PI / 4) };
+    camera_ext_t_data = { -0.5, 0, 0 };
     CV_Assert( ( m_vio_image_width != 0 && m_vio_image_heigh != 0 ) );
 
     if ( ( camera_intrinsic_data.size() != 9 ) || ( camera_dist_coeffs_data.size() != 5 ) || ( camera_ext_R_data.size() != 9 ) ||
@@ -498,42 +461,6 @@ void R3LIVE::set_image_pose( std::shared_ptr< Image_frame > &image_pose, const S
 
     image_pose->m_cam_K << image_pose->fx, 0, image_pose->cx, 0, image_pose->fy, image_pose->cy, 0, 0, 1;
     scope_color( ANSI_COLOR_CYAN_BOLD );
-    // cout << "Set Image Pose frm [" << image_pose->m_frame_idx << "], pose: " << eigen_q(rot_mat).coeffs().transpose()
-    // << " | " << t_vec.transpose()
-    // << " | " << eigen_q(rot_mat).angularDistance( eigen_q::Identity()) *57.3 << endl;
-    // image_pose->inverse_pose();
-}
-
-void R3LIVE::publish_camera_odom( std::shared_ptr< Image_frame > &image, double msg_time )
-{
-    //eigen_q            odom_q = image->m_pose_w2c_q;
-    //vec_3              odom_t = image->m_pose_w2c_t;
-    //nav_msgs::Odometry camera_odom;
-    //camera_odom.header.frame_id = "world";
-    //camera_odom.child_frame_id = "/aft_mapped";
-    //camera_odom.header.stamp = ros::Time::now(); // ros::Time().fromSec(last_timestamp_lidar);
-    //camera_odom.pose.pose.orientation.x = odom_q.x();
-    //camera_odom.pose.pose.orientation.y = odom_q.y();
-    //camera_odom.pose.pose.orientation.z = odom_q.z();
-    //camera_odom.pose.pose.orientation.w = odom_q.w();
-    //camera_odom.pose.pose.position.x = odom_t( 0 );
-    //camera_odom.pose.pose.position.y = odom_t( 1 );
-    //camera_odom.pose.pose.position.z = odom_t( 2 );
-    //pub_odom_cam.publish( camera_odom );
-
-    //geometry_msgs::PoseStamped msg_pose;
-    //msg_pose.header.stamp = ros::Time().fromSec( msg_time );
-    //msg_pose.header.frame_id = "world";
-    //msg_pose.pose.orientation.x = odom_q.x();
-    //msg_pose.pose.orientation.y = odom_q.y();
-    //msg_pose.pose.orientation.z = odom_q.z();
-    //msg_pose.pose.orientation.w = odom_q.w();
-    //msg_pose.pose.position.x = odom_t( 0 );
-    //msg_pose.pose.position.y = odom_t( 1 );
-    //msg_pose.pose.position.z = odom_t( 2 );
-    //camera_path.header.frame_id = "world";
-    //camera_path.poses.push_back( msg_pose );
-    //pub_path_cam.publish( camera_path );
 }
 
 void R3LIVE::publish_track_pts( Rgbmap_tracker &tracker )
@@ -553,11 +480,6 @@ void R3LIVE::publish_track_pts( Rgbmap_tracker &tracker )
         temp_point.b = color( 0 );
         pointcloud_for_pub.points.push_back( temp_point );
     }
-    //sensor_msgs::PointCloud2 ros_pc_msg;
-    //pcl::toROSMsg( pointcloud_for_pub, ros_pc_msg );
-    //ros_pc_msg.header.stamp = ros::Time::now(); //.fromSec(last_timestamp_lidar);
-    //ros_pc_msg.header.frame_id = "world";       // world; camera_init
-    //m_pub_visual_tracked_3d_pts.publish( ros_pc_msg );
 }
 
 // ANCHOR - VIO preintegration
@@ -876,7 +798,7 @@ bool R3LIVE::vio_photometric( StatesGroup &state_in, Rgbmap_tracker &op_track, s
             pt_img_measure = vec_2( it->second.x, it->second.y );
             pt_3d_cam = R_w2c * pt_3d_w + t_w2c;
             pt_img_proj = vec_2( fx * pt_3d_cam( 0 ) / pt_3d_cam( 2 ) + cx, fy * pt_3d_cam( 1 ) / pt_3d_cam( 2 ) + cy ) + time_td * pt_img_vel;
-            if (pt_img_proj(0) >= 1914 || pt_img_proj(1) >= 1074 || pt_img_proj(0) <= 5 || pt_img_proj(1) <= 5) {
+            if (pt_img_proj(0) >= m_vio_image_width - 6 || pt_img_proj(1) >= m_vio_image_heigh - 6 || pt_img_proj(0) <= 5 || pt_img_proj(1) <= 5) {
                 continue;
             }
 
@@ -1054,50 +976,14 @@ void R3LIVE::service_pub_rgb_maps()
     }
 }
 
-//void R3LIVE::publish_render_pts( ros::Publisher &pts_pub, Global_map &m_map_rgb_pts )
-//{
-//    pcl::PointCloud< pcl::PointXYZRGB > pc_rgb;
-//    sensor_msgs::PointCloud2            ros_pc_msg;
-//    pc_rgb.reserve( 1e7 );
-//    m_map_rgb_pts.m_mutex_m_box_recent_hitted->lock();
-//    std::unordered_set< std::shared_ptr< RGB_Voxel > > boxes_recent_hitted = m_map_rgb_pts.m_voxels_recent_visited;
-//    m_map_rgb_pts.m_mutex_m_box_recent_hitted->unlock();
-//
-//    for ( Voxel_set_iterator it = boxes_recent_hitted.begin(); it != boxes_recent_hitted.end(); it++ )
-//    {
-//        for ( int pt_idx = 0; pt_idx < ( *it )->m_pts_in_grid.size(); pt_idx++ )
-//        {
-//            pcl::PointXYZRGB           pt;
-//            std::shared_ptr< RGB_pts > rgb_pt = ( *it )->m_pts_in_grid[ pt_idx ];
-//            pt.x = rgb_pt->m_pos[ 0 ];
-//            pt.y = rgb_pt->m_pos[ 1 ];
-//            pt.z = rgb_pt->m_pos[ 2 ];
-//            pt.r = rgb_pt->m_rgb[ 2 ];
-//            pt.g = rgb_pt->m_rgb[ 1 ];
-//            pt.b = rgb_pt->m_rgb[ 0 ];
-//            if ( rgb_pt->m_N_rgb > m_pub_pt_minimum_views )
-//            {
-//                pc_rgb.points.push_back( pt );
-//            }
-//        }
-//    }
-//    pcl::toROSMsg( pc_rgb, ros_pc_msg );
-//    ros_pc_msg.header.frame_id = "world";       // world; camera_init
-//    ros_pc_msg.header.stamp = ros::Time::now(); //.fromSec(last_timestamp_lidar);
-//    pts_pub.publish( ros_pc_msg );
-//}
-
 char R3LIVE::cv_keyboard_callback()
 {
     char c = cv_wait_key( 1 );
-    // return c;
     if ( c == 's' || c == 'S' )
     {
         scope_color( ANSI_COLOR_GREEN_BOLD );
         cout << "I capture the keyboard input!!!" << endl;
         m_mvs_recorder.export_to_mvs( m_map_rgb_pts );
-        // m_map_rgb_pts.save_and_display_pointcloud( m_map_output_dir, std::string("/rgb_pt"), std::max(m_pub_pt_minimum_views, 5) );
-        //m_map_rgb_pts.save_and_display_pointcloud( m_map_output_dir, std::string("/rgb_pt"), m_pub_pt_minimum_views  );
     }
     return c;
 }
@@ -1105,7 +991,6 @@ char R3LIVE::cv_keyboard_callback()
 // ANCHOR -  service_VIO_update
 void R3LIVE::service_VIO_update()
 {
-    //std::ofstream ofs("rawPoints.obj");
     // Init cv windows for debug
     op_track.set_intrinsic( g_cam_K, g_cam_dist * 0, cv::Size( m_vio_image_width / m_vio_scale_factor, m_vio_image_heigh / m_vio_scale_factor ) );
     op_track.m_maximum_vio_tracked_pts = m_maximum_vio_tracked_pts;
@@ -1116,13 +1001,11 @@ void R3LIVE::service_VIO_update()
     cv::Mat             img_get;
 
     char costTimeText[100] = { 0 };
-    //while ( ros::ok() )
     while (1)
     {
         cv_keyboard_callback();
         while ( g_camera_lidar_queue.m_if_have_lidar_data == 0 )
         {
-            //ros::spinOnce();
             std::this_thread::sleep_for( std::chrono::milliseconds( THREAD_SLEEP_TIM ) );
             std::this_thread::yield();
             continue;
@@ -1130,7 +1013,6 @@ void R3LIVE::service_VIO_update()
 
         if ( m_queue_image_with_pose.size() == 0 )
         {
-            //ros::spinOnce();
             std::this_thread::sleep_for( std::chrono::milliseconds( THREAD_SLEEP_TIM ) );
             std::this_thread::yield();
             continue;
@@ -1160,7 +1042,6 @@ void R3LIVE::service_VIO_update()
             // while ( ( m_map_rgb_pts.is_busy() ) || ( ( m_map_rgb_pts.m_rgb_pts_vec.size() <= 100 ) ) )
             while ( ( ( m_map_rgb_pts.m_rgb_pts_vec.size() <= 100 ) ) )
             {
-                //ros::spinOnce();
                 std::this_thread::sleep_for( std::chrono::milliseconds( 1 ) );
             }
             set_image_pose( img_pose, g_lio_state ); // For first frame pose, we suppose that the motion is static.
@@ -1174,20 +1055,18 @@ void R3LIVE::service_VIO_update()
         tim.tic( "Wait" );
 
         cv::Mat m_showImg;
-        cv::resize(img_pose->m_img, m_showImg, cv::Size(300, 300));
+        cv::resize(img_pose->m_img, m_showImg, cv::Size(480, 270));
         sprintf(costTimeText, "VIO Frame cost time : %lf ms\n", g_vio_frame_cost_time);
         cv::putText(m_showImg, costTimeText, cv::Size(10, 20), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Vec3b(1.0, 0.0, 0.0));
         cv::imshow("Frame", m_showImg);
 
         while ( g_camera_lidar_queue.if_camera_can_process() == false )
         {
-            //ros::spinOnce();
             std::this_thread::sleep_for( std::chrono::milliseconds( THREAD_SLEEP_TIM ) );
             std::this_thread::yield();
             cv_keyboard_callback();
         }
 
-        //g_cost_time_logger.record( tim, "Wait" );
         m_mutex_lio_process.lock();
         tim.tic( "Frame" );
         tim.tic( "Track_img" );
@@ -1201,8 +1080,6 @@ void R3LIVE::service_VIO_update()
         set_image_pose( img_pose, state_out );
 
         op_track.track_img( img_pose, -20 );
-        //g_cost_time_logger.record( tim, "Track_img" );
-        // cout << "Track_img cost " << tim.toc( "Track_img" ) << endl;
         tim.tic( "Ransac" );
         set_image_pose( img_pose, state_out );
 
@@ -1211,15 +1088,12 @@ void R3LIVE::service_VIO_update()
         {
             cout << ANSI_COLOR_RED_BOLD << "****** Remove_outlier_using_ransac_pnp error*****" << ANSI_COLOR_RESET << endl;
         }
-        //g_cost_time_logger.record( tim, "Ransac" );
         tim.tic( "Vio_f2f" );
         bool res_esikf = true, res_photometric = true;
         wait_render_thread_finish();
         res_esikf = vio_esikf( state_out, op_track );
-        //g_cost_time_logger.record( tim, "Vio_f2f" );
         tim.tic( "Vio_f2m" );
         res_photometric = vio_photometric( state_out, op_track, img_pose );
-        //g_cost_time_logger.record( tim, "Vio_f2m" );
         g_lio_state = state_out;
         print_dash_board();
         set_image_pose( img_pose, state_out );
@@ -1227,80 +1101,52 @@ void R3LIVE::service_VIO_update()
         if ( 1 )
         {
             tim.tic( "Render" );
-            // m_map_rgb_pts.render_pts_in_voxels(img_pose, m_last_added_rgb_pts_vec);
             if ( 1 ) // Using multiple threads for rendering
             {
                 m_map_rgb_pts.m_if_get_all_pts_in_boxes_using_mp = 0;
-                // m_map_rgb_pts.render_pts_in_voxels_mp(img_pose, &m_map_rgb_pts.m_rgb_pts_in_recent_visited_voxels,
-                // img_pose->m_timestamp);
                 m_render_thread = std::make_shared< std::shared_future< void > >( m_thread_pool_ptr->commit_task(
                     render_pts_in_voxels_mp, img_pose, &m_map_rgb_pts.m_voxels_recent_visited, img_pose->m_timestamp ) );
             }
             else
             {
                 m_map_rgb_pts.m_if_get_all_pts_in_boxes_using_mp = 0;
-                // m_map_rgb_pts.render_pts_in_voxels( img_pose, m_map_rgb_pts.m_rgb_pts_in_recent_visited_voxels,
-                // img_pose->m_timestamp );
             }
             m_map_rgb_pts.m_last_updated_frame_idx = img_pose->m_frame_idx;
-            //g_cost_time_logger.record( tim, "Render" );
 
             tim.tic( "Mvs_record" );
             if ( m_if_record_mvs )
             {
-                // m_mvs_recorder.insert_image_and_pts( img_pose, m_map_rgb_pts.m_voxels_recent_visited );
+                g_mutex_render.lock();
+                
                 m_mvs_recorder.insert_image_and_pts( img_pose, m_map_rgb_pts.m_pts_last_hitted );
 
-                std::vector<std::vector<double>> pts;
-                for (int i = 0; i < m_map_rgb_pts.m_pts_last_hitted.size(); ++i) {
-                    std::shared_ptr< RGB_pts > pPts = m_map_rgb_pts.m_pts_last_hitted[i];
-                    if (pPts->m_N_rgb != 3) {
-                        continue;
-                    }
-                    std::vector<double> pt = { pPts->get_pos().x(), pPts->get_pos().y(), pPts->get_pos().z(), pPts->get_rgb().z() / 255.0, pPts->get_rgb().y() / 255.0, pPts->get_rgb().x() / 255.0 };
-                    pts.push_back(pt);
-                    //ofs << "v " << pt[0] << " " << pt[1] << " " << pt[2] << " " << pt[3] << " " << pt[4] << " " << pt[5] << std::endl;
-                }
-                OsgManager::getInstance()->updatePoints(pts);
+                g_mutex_render.unlock();
 
-                //OsgManager::getInstance()->updatePose(img_pose->m_pose_w2c_q.x(), img_pose->m_pose_w2c_q.y(), img_pose->m_pose_w2c_q.z(), img_pose->m_pose_w2c_q.w(), img_pose->m_pose_w2c_t.x(), img_pose->m_pose_w2c_t.y(), img_pose->m_pose_w2c_t.z());
+                osg::ref_ptr<osg::Geometry> geomPoints = new osg::Geometry();
+                osg::Vec3Array* varray = new osg::Vec3Array();
+                osg::Vec3Array* carray = new osg::Vec3Array();
+
+                for (auto& pts : m_map_rgb_pts.m_pts_last_hitted) {
+                    if (pts->m_N_rgb == 3) {
+                        varray->push_back({ (float)pts->get_pos().x(), (float)pts->get_pos().y(), (float)pts->get_pos().z() });
+                        carray->push_back({ (float)pts->get_rgb().x() / 255.0f, (float)pts->get_rgb().y() / 255.0f, (float)pts->get_rgb().z() / 255.0f });
+                    }
+                }
+                geomPoints->setVertexArray(varray);
+                geomPoints->setColorArray(carray, osg::Array::Binding::BIND_PER_VERTEX);
+                geomPoints->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::POINTS, 0, varray->size()));
+                OsgManager::getInstance()->updatePoints(geomPoints);
+                OsgManager::getInstance()->updatePose(img_pose->m_pose_w2c_q.x(), img_pose->m_pose_w2c_q.y(), img_pose->m_pose_w2c_q.z(), img_pose->m_pose_w2c_q.w(), img_pose->m_pose_w2c_t.x(), img_pose->m_pose_w2c_t.y(), img_pose->m_pose_w2c_t.z());
             }
-            //g_cost_time_logger.record( tim, "Mvs_record" );
         }
         // ANCHOR - render point cloud
-        //dump_lio_state_to_log( m_lio_state_fp );
         m_mutex_lio_process.unlock();
-        // cout << "Solve image pose cost " << tim.toc("Solve_pose") << endl;
         m_map_rgb_pts.update_pose_for_projection( img_pose, -0.4 );
         op_track.update_and_append_track_pts( img_pose, m_map_rgb_pts, m_track_windows_size / m_vio_scale_factor, 1000000 );
-        //g_cost_time_logger.record( tim, "Frame" );
         double frame_cost = tim.toc( "Frame" );
-        //g_image_vec.push_back( img_pose );
         frame_cost_time_vec.push_back( frame_cost );
-        //if ( g_image_vec.size() > 10 )
-        //{
-        //    g_image_vec.pop_front();
-        //    frame_cost_time_vec.pop_front();
-        //}
-        //tim.tic( "Pub" );
+
         double display_cost_time = std::accumulate( frame_cost_time_vec.begin(), frame_cost_time_vec.end(), 0.0 ) / frame_cost_time_vec.size();
         g_vio_frame_cost_time = display_cost_time;
-        // publish_render_pts( m_pub_render_rgb_pts, m_map_rgb_pts );
-        //publish_camera_odom( img_pose, message_time );
-        // publish_track_img( op_track.m_debug_track_img, display_cost_time );
-        //publish_track_img( img_pose->m_raw_img, display_cost_time );
-
-        //if ( m_if_pub_raw_img )
-        //{
-        //    publish_raw_img( img_pose->m_raw_img );
-        //}
-
-        //if ( g_camera_lidar_queue.m_if_dump_log )
-        //{
-        //    g_cost_time_logger.flush();
-        //}
-        // cout << "Publish cost time " << tim.toc("Pub") << endl;
     }
-
-    //ofs.close();
 }

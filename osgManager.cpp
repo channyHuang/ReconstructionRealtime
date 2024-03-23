@@ -29,6 +29,8 @@ void OsgManager::setViewer(osgViewer::Viewer& viewer) {
 
 	//pviewer->addEventHandler(new PickHandler());
 	pviewer->setSceneData(root);
+
+	show();
 }
 
 void OsgManager::switchScene() {
@@ -43,21 +45,28 @@ void OsgManager::switchScene() {
 	}
 }
 
-void OsgManager::show(const std::string &str, bool braw) {
-	if (!braw) {
-		loadObjectModel(str.c_str(), "E:/projects/r3live-lab-res/", pviewer);
-	}
-	else {
-		osg::ref_ptr<osg::Geometry> geom = loadObjModel(str, false);
-		sceneSwitch->addChild(geom);
+void OsgManager::show() {
+	int height = 5;
+	osg::Vec3Array* varray = new osg::Vec3Array();
+	osg::Vec3Array* carray = new osg::Vec3Array();
 
-		osg::ref_ptr<osg::Geometry> geomWireframe = new osg::Geometry(*geom.get(), osg::CopyOp::SHALLOW_COPY);
-		osg::ref_ptr<osg::Vec4Array> vcolors = new osg::Vec4Array;
-		vcolors->push_back(osg::Vec4(0.f, 1.f, 0.f, 1.f));
-		geomWireframe->setColorArray(vcolors, osg::Array::Binding::BIND_OVERALL);
-		setWireFrame(geomWireframe->getOrCreateStateSet(), ShowType::SHOW_WIREFRAME);
-		sceneSwitch->addChild(geomWireframe);
+	int curx = 0, cury = 0;
+
+	varray->push_back(osg::Vec3(curx, cury, height));
+	carray->push_back(osg::Vec3(1, 0, 1));
+
+	for (int y = 5; y >= -20; y -= 3) {
+		varray->push_back(osg::Vec3(curx, y, height));
+		curx = 15 - curx;
+		varray->push_back(osg::Vec3(curx, y, height));
 	}
+
+	osg::ref_ptr<osg::Geometry> geom = new osg::Geometry;
+	geom->setVertexArray(varray);
+	geom->setColorArray(carray, osg::Array::Binding::BIND_OVERALL);
+	geom->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::LINE_STRIP, 0, varray->size()));
+
+	sceneSwitch->addChild(geom);
 }
 
 void OsgManager::updatePoints(const std::vector<std::vector<double>>& pts) {
@@ -75,8 +84,10 @@ void OsgManager::updatePoints(const std::vector<std::vector<double>>& pts) {
 	geomPoints->setColorArray(carray, osg::Array::Binding::BIND_PER_VERTEX);
 	geomPoints->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::POINTS, 0, varray->size()));
 
-	//geomPoints->dirtyBound();
-	//geomPoints->dirtyGLObjects();
+	sceneSwitch->addChild(geomPoints);
+}
+
+void OsgManager::updatePoints(osg::ref_ptr<osg::Geometry> geomPoints) {
 	sceneSwitch->addChild(geomPoints);
 }
 
@@ -84,4 +95,28 @@ void OsgManager::updatePose(double x, double y, double z, double w, double tx, d
 	localAxisMatrix.setRotate(osg::Quat(x, y, z, w));
 	localAxisMatrix.setTrans(osg::Vec3d(tx, ty, tz));
 	localAxisNode->setMatrix(localAxisMatrix);
+
+	if (pathGeom == nullptr) {
+		osg::Vec3Array* varray = new osg::Vec3Array();
+		osg::Vec3Array* carray = new osg::Vec3Array();
+
+		varray->push_back(osg::Vec3(tx, ty, tz));
+		carray->push_back(osg::Vec3(1, 1, 0));
+
+		pathGeom = new osg::Geometry;
+		pathGeom->setVertexArray(varray);
+		pathGeom->setColorArray(carray, osg::Array::Binding::BIND_OVERALL);
+		pathGeom->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::LINE_STRIP, 0, varray->size()));
+
+		sceneSwitch->addChild(pathGeom);
+	}
+	else {
+		osg::Vec3Array* varray = (osg::Vec3Array*)pathGeom->getVertexArray();
+		varray->push_back(osg::Vec3(tx, ty, tz));
+
+		pathGeom->setVertexArray(varray);
+		pathGeom->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::LINE_STRIP, 0, varray->size()));
+		pathGeom->dirtyBound();
+		pathGeom->dirtyGLObjects();
+	}
 }

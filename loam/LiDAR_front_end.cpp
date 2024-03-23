@@ -1,3 +1,4 @@
+/*
 //#include <ros/ros.h>
 //#include <pcl_conversions/pcl_conversions.h>
 //#include <sensor_msgs/PointCloud2.h>
@@ -869,3 +870,4 @@ bool edge_jump_judge( const pcl::PointCloud< PointType > &pl, vector< orgtype > 
 
     return true;
 }
+*/

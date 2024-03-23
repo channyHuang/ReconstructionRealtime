@@ -42,7 +42,6 @@
 #include <float.h>
 #include <stdio.h>
 #include "lkpyramid.hpp"
-//#include "tools_logger.hpp"
 #include <omp.h>
 
 #define CV_DESCALE(x, n) (((x) + (1 << ((n)-1))) >> (n))

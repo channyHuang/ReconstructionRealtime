@@ -174,9 +174,6 @@ void Rgbmap_tracker::reject_error_tracking_pts( std::shared_ptr< Image_frame > &
     double u, v;
     int    remove_count = 0;
     int    total_count = m_map_rgb_pts_in_current_frame_pos.size();
-    // cout << "Cam mat: " <<img_pose->m_cam_K << endl;
-    // cout << "Image pose: ";
-    // img_pose->display_pose();
     scope_color( ANSI_COLOR_BLUE_BOLD );
     for ( auto it = m_map_rgb_pts_in_current_frame_pos.begin(); it != m_map_rgb_pts_in_current_frame_pos.end(); it++ )
     {
@@ -195,42 +192,12 @@ void Rgbmap_tracker::reject_error_tracking_pts( std::shared_ptr< Image_frame > &
         }
         else
         {
-            // cout << pt_3d.transpose() << " | ";
-            // cout << "Predicted: " << vec_2(predicted_pt.x, predicted_pt.y).transpose() << ", measure: " << vec_2(u,
-            // v).transpose() << endl;
             m_map_rgb_pts_in_current_frame_pos.erase( it );
             remove_count++;
         }
     }
     cout << "Total pts = " << total_count << ", rejected pts = " << remove_count << endl;
 }
-
-// inline void image_equalize(cv::Mat &img, int amp)
-// {
-//     cv::Mat img_temp;
-//     cv::Size eqa_img_size = cv::Size(std::max(img.cols * 32.0 / 640, 4.0), std::max(img.cols * 32.0 / 640, 4.0));
-//     cv::Ptr<cv::CLAHE> clahe = cv::createCLAHE(amp, eqa_img_size);
-//     // Equalize gray image.
-//     clahe->apply(img, img_temp);
-//     img = img_temp;
-// }
-
-// inline cv::Mat equalize_color_image_ycrcb(cv::Mat &image)
-// {
-//     cv::Mat hist_equalized_image;
-//     cv::cvtColor(image, hist_equalized_image, cv::COLOR_BGR2YCrCb);
-
-//     //Split the image into 3 channels; Y, Cr and Cb channels respectively and store it in a std::vector
-//     std::vector<cv::Mat> vec_channels;
-//     cv::split(hist_equalized_image, vec_channels);
-
-//     //Equalize the histogram of only the Y channel
-//     // cv::equalizeHist(vec_channels[0], vec_channels[0]);
-//     image_equalize( vec_channels[0], 2 );
-//     cv::merge(vec_channels, hist_equalized_image);
-//     cv::cvtColor(hist_equalized_image, hist_equalized_image, cv::COLOR_YCrCb2BGR);
-//     return hist_equalized_image;
-// }
 
 void Rgbmap_tracker::track_img( std::shared_ptr< Image_frame > &img_pose, double dis, int if_use_opencv )
 {
@@ -320,9 +287,6 @@ int Rgbmap_tracker::get_all_tracked_pts( std::vector< std::vector< cv::Point2f >
 
 int Rgbmap_tracker::remove_outlier_using_ransac_pnp( std::shared_ptr< Image_frame > &img_pose, int if_remove_ourlier )
 {
-    Common_tools::Timer tim;
-    tim.tic();
-
     cv::Mat                    r_vec, t_vec;
     cv::Mat                    R_mat;
     vec_3                      eigen_r_vec, eigen_t_vec;
@@ -372,10 +336,8 @@ int Rgbmap_tracker::remove_outlier_using_ransac_pnp( std::shared_ptr< Image_fram
     }
 
     // cv::solvePnP(pt_3d_vec, pt_2d_vec, m_intrinsic, m_dist_coeffs * 0, r_vec, t_vec);
-
     cv::cv2eigen( r_vec, eigen_r_vec );
     cv::cv2eigen( t_vec, eigen_t_vec );
-    // eigen_q solver_q = Sophus::SO3d::exp(eigen_r_vec).unit_quaternion().inverse();
     eigen_q solver_q = Sophus::SO3d::exp( eigen_r_vec ).unit_quaternion().inverse();
     vec_3   solver_t = ( solver_q * eigen_t_vec ) * -1.0;
     // cout << "Solve pose: " << solver_q.coeffs().transpose() << " | " << solver_t.transpose() << endl;
@@ -383,7 +345,6 @@ int Rgbmap_tracker::remove_outlier_using_ransac_pnp( std::shared_ptr< Image_fram
     double t_diff = ( solver_t - img_pose->m_pose_w2c_t ).norm();
     double r_diff = ( solver_q ).angularDistance( img_pose->m_pose_w2c_q ) * 57.3;
     
-    if_update = 1;
     t_last_estimated = solver_t;
     if ( if_update )
     {
@@ -401,6 +362,6 @@ int Rgbmap_tracker::remove_outlier_using_ransac_pnp( std::shared_ptr< Image_fram
     }
     img_pose->refresh_pose_for_projection();
     img_pose->m_have_solved_pnp = 1;
-    // cout << "Estimate pose cost time = " << tim.toc() << endl;
+
     return if_update;
 }

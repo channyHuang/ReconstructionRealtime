@@ -184,6 +184,7 @@ struct Global_map
     Hash_map_3d< long, std::shared_ptr< RGB_Voxel > > m_hashmap_voxels;
     std::unordered_set< std::shared_ptr< RGB_Voxel > > m_voxels_recent_visited;
     std::vector< std::shared_ptr< RGB_pts > >          m_pts_last_hitted;
+    std::vector< std::shared_ptr< RGB_pts > >          m_pts_last_added;
     double                                   m_minimum_pts_size = 0.05; // 5cm minimum distance.
     double                                   m_voxel_resolution = 0.1;
     double                                   m_maximum_depth_for_projection = 200;
@@ -200,7 +201,7 @@ struct Global_map
     void update_pose_for_projection( std::shared_ptr< Image_frame > &img, double fov_margin = 0.0001 );
     bool is_busy();
     template < typename T >
-    int append_points_to_global_map( pcl::PointCloud< T > &pc_in, double  added_time,  std::vector< RGB_pt_ptr > *pts_added_vec = nullptr, int step = 1 );
+    int append_points_to_global_map( pcl::PointCloud< T > &pc_in, double  added_time,  std::vector< RGB_pt_ptr > *pts_added_vec = nullptr, int step = 1);
     void render_with_a_image( std::shared_ptr< Image_frame > &img_ptr, int if_select = 1 );
     void selection_points_for_projection( std::shared_ptr< Image_frame > &image_pose, std::vector< std::shared_ptr< RGB_pts > > *pc_out_vec = nullptr,
                                           std::vector< cv::Point2f > *pc_2d_out_vec = nullptr, double minimum_dis = 5, int skip_step = 1,int use_all_pts = 0 );

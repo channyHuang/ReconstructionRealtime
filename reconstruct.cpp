@@ -53,7 +53,7 @@ Common_tools::Cost_time_logger              g_cost_time_logger;
 //std::shared_ptr< Common_tools::ThreadPool > m_thread_pool_ptr;
 std::string                                 data_path = std::string("/home/ziv/color_temp_r3live/");
 
-std::string g_working_dir = "E:/projects/osgReconRealtime"; //"E:/projects/r3live-lab-res";
+std::string g_working_dir = "E:/projects/AllOsgProj/osgReconRealtime/build"; //"E:/projects/r3live-lab-res";
 std::string g_offline_map_name;
 double      g_insert_pt_dis = 1.0;
 //bool        bUseConstantWeight;
@@ -79,28 +79,6 @@ pcl::PointCloud<MeshPointType>::Ptr pcl_pc_rgb = nullptr;
 pcl::KdTreeFLANN<MeshPointType> kdtree;
 
 Reconstruction* Reconstruction::instance = nullptr;
-
-int Reconstruction::reconstruct_points(/*int argc, char** argv*/)
-{
-    //printf_program("R3LIVE: A Robust, Real-time, RGB-colored, LiDAR-Inertial-Visual tightly-coupled state Estimation and mapping package");
-    //Common_tools::printf_software_version();
-    Eigen::initParallel();
-    //ros::init(argc, argv, "R3LIVE_main");
-    R3LIVE* fast_lio_instance = new R3LIVE();
-    //ros::Rate rate(5000);
-    //bool status = ros::ok();
-    //ros::spin();
-
-    ParseBag::getInstance()->notifyImu.connect(fast_lio_instance, &R3LIVE::imu_cbk);
-    ParseBag::getInstance()->notifyImage.connect(fast_lio_instance, &R3LIVE::image_comp_callback);
-    ParseBag::getInstance()->notifyPoints.connect(fast_lio_instance, &R3LIVE::feat_points_cbk);
-
-    //std::string fileName = "D:/dataset/lab/c2_lvi/20230630-object-lvi.bag";
-    std::string fileName = "D:/dataset/lab/c2_lvi/20230607lvi.bag";
-    ParseBag::getInstance()->parseBag(fileName);
-
-    return 0;
-}
 
 void build_pcl_kdtree(Offline_map_recorder& r3live_map_recorder)
 {
@@ -134,363 +112,6 @@ void build_pcl_kdtree(Offline_map_recorder& r3live_map_recorder)
     }
     kdtree.setInputCloud(pcl_pc_rgb);
 }
-
-
-void writeTextureSetting(int frame_idx) {
-    char cname[32] = { 0 };
-    sprintf(cname, "./texture/MeshTex_%04d.mtl", frame_idx);
-    std::ofstream ofs(cname);
-    ofs << "newmtl material_0\nKa 0.100000 0.100000 0.100000\nKd 1.000000 1.000000 1.000000\nKs 0.000000 0.000000 0.000000\nTr 0.000000\nillum 1\nNs 1.000000\nmap_Kd ";
-    memset(cname, 32, 0);
-    sprintf(cname, "./../image/%04d.jpg", frame_idx);
-    ofs << cname << std::endl;
-    ofs.close();
-}
-
-void texture_mesh_Others(MVS::Mesh& meshWithoutTex, Offline_map_recorder& r3live_map_recorder, std::string input_mesh_name, std::string output_mesh_name, int smooth_factor = 1)
-{
-    meshWithoutTex.Release();
-    meshWithoutTex.Load(input_mesh_name);
-
-    build_pcl_kdtree(r3live_map_recorder);
-    std::vector< int >      pointIdxNKNSearch(smooth_factor);
-    std::vector< float >    pointNKNSquaredDistance(smooth_factor);
-
-    std::vector<int> pt_counts(r3live_map_recorder.m_image_pose_vec.size(), 0);
-
-    struct TexPoint {
-        int indexInMesh;
-        int indexInPC;
-        int frame_st;
-        int frame_end;
-        int last_frame_idx = -1;
-
-        const bool operator < (const TexPoint& p) {
-            if (frame_st == p.frame_st) {
-                if (frame_end == p.frame_end) {
-                    return indexInPC < p.indexInPC;
-                }
-                return frame_end < p.frame_end;
-            }
-            return frame_st < p.frame_st;
-        }
-    };
-    std::vector<TexPoint> points(meshWithoutTex.vertices.size());
-    std::unordered_map<int, int> pointsIndex;
-    std::vector<bool> faceFlag(meshWithoutTex.faces.size(), false);
-
-    for (int i = 0; i < meshWithoutTex.vertices.size(); ++i)
-    {
-        const MVS::Mesh::Vertex& v0 = meshWithoutTex.vertices[i];
-        MeshPointType pt = MeshPointType(v0.x, v0.y, v0.z);
-        if (kdtree.nearestKSearch(pt, smooth_factor, pointIdxNKNSearch, pointNKNSquaredDistance) > 0) {
-            for (int j = 0; j < smooth_factor; ++j) {
-                points[i].indexInPC = pcl_pc_rgb->points[pointIdxNKNSearch[j]].label;
-                points[i].indexInMesh = i; 
-                points[i].frame_st = r3live_map_recorder.m_global_map->m_rgb_pts_vec[points[i].indexInPC]->m_frame_idx_st;
-                points[i].frame_end = r3live_map_recorder.m_global_map->m_rgb_pts_vec[points[i].indexInPC]->m_frame_idx_end;
-            }
-        }
-    }
-
-    std::sort(points.begin(), points.end());
-    for (int i = 0; i < points.size(); ++i) {
-        pointsIndex[points[i].indexInMesh] = i;
-    }
-    std::vector<int> face_frame_idx(meshWithoutTex.faces.size(), -2);
-    std::queue<std::pair<int, int>> qu_face;
-    int target_vertex_idx = points[0].indexInMesh;
-    
-    double u_f[3] = { 0 }, v_f[3] = { 0 };
-    int poly_frame_st, poly_frame_end;
-    
-    auto checkDistance = [r3live_map_recorder](int frame_st, int frame_cur) -> bool {
-        std::shared_ptr< Image_frame > img_ptr_st = r3live_map_recorder.m_image_pose_vec[frame_st];
-        std::shared_ptr< Image_frame > img_ptr_cur = r3live_map_recorder.m_image_pose_vec[frame_cur];
-        return std::fabs((img_ptr_st->m_pose_c2w_t - img_ptr_cur->m_pose_c2w_t).norm()) < 5;
-    };
-
-    auto checkProjection = [r3live_map_recorder, meshWithoutTex](const MVS::Mesh::Face& f, int frame_idx, double* u_f, double* v_f) -> bool {
-        std::shared_ptr< Image_frame > img_ptr = r3live_map_recorder.m_image_pose_vec[frame_idx];
-        for (int j = 0; j < 3; ++j) {
-            const MVS::Mesh::Vertex &v = meshWithoutTex.vertices[f[j]];
-            pcl::PointXYZI temp_pt;
-            temp_pt.x = v.x;
-            temp_pt.y = v.y;
-            temp_pt.z = v.z;
-            double angle;
-            bool res = img_ptr->project_3d_point_in_this_img(temp_pt, u_f[j], v_f[j], angle, nullptr, 1.0);
-            if (!res) {
-                return false;
-            }
-        }
-        return true;
-    };
-
-    auto writeFile = [&](const MVS::Mesh::Face& f, int frame_idx, double* u_f, double* v_f) -> void {
-        char name[128] = { 0 };
-        sprintf(name, "./mesh/MeshTex_%04d.obj", frame_idx);
-        bool bExist = true;
-        std::ifstream ifs(name);
-        if (!ifs.good()) {
-            bExist = false;
-        }
-        ifs.close();
-        std::ofstream ofs(name, std::ios::app);
-        if (!bExist) {
-            sprintf(name, "mtllib ./../texture/MeshTex_%04d.mtl", frame_idx);
-            ofs << name << std::endl;
-        }
-        for (int j = 0; j < 3; ++j) {
-            auto &v = meshWithoutTex.vertices[f[j]];
-            ofs << "v " << v.x << " " << v.y << " " << v.z << std::endl;
-            pt_counts[frame_idx]++;
-        }
-        for (int j = 0; j < 3; ++j) {
-            ofs << "vt " << u_f[j] / 1920.0 << " " << 1 - v_f[j] / 1080.0 << /*" " << k << " " << u_f[j] << " " << v_f[j] << " " <<*/ endl;
-        }
-        ofs << "f " << pt_counts[frame_idx] - 2 << "/" << pt_counts[frame_idx] - 2 << " " << pt_counts[frame_idx] - 1 << "/" << pt_counts[frame_idx] - 1 << " " << pt_counts[frame_idx] << "/" << pt_counts[frame_idx] << endl;
-        ofs.close();
-    };
-
-    auto getFrameRange = [&](const MVS::Mesh::Face& f, int& frame_st, int& frame_end) -> void {
-        frame_st = 0;
-        frame_end = r3live_map_recorder.m_image_pose_vec.size() - 1;
-        for (int j = 0; j < 3; ++j) {
-            frame_st = std::max(frame_st, points[pointsIndex[f[j]]].frame_st);
-            frame_end = std::min(frame_end, points[pointsIndex[f[j]]].frame_end);
-        }
-    };
-    meshWithoutTex.ListIncidenteFaces();
-    MVS::Mesh::FaceIdxArr& vFaceIndices = meshWithoutTex.vertexFaces[target_vertex_idx];
-    for (int j = 0; j < points.size(); ++j) {
-        for (int i = 0; i < vFaceIndices.size(); ++i) {
-            if (face_frame_idx[vFaceIndices[i]] >= 0) continue;
-            qu_face.push(std::make_pair(vFaceIndices[i], points[j].frame_st));
-        }
-
-        while (!qu_face.empty()) {
-            auto face_frame = qu_face.front();
-            qu_face.pop();
-
-            // neighbor faces
-            MVS::Mesh::FaceIdxArr nface;
-            meshWithoutTex.GetFaceFaces(face_frame.first, nface);
-
-            // cur face
-            const MVS::Mesh::Face& face(meshWithoutTex.faces[face_frame.first]);
-
-            getFrameRange(face, poly_frame_st, poly_frame_end);
-
-
-            if ((std::abs(poly_frame_st - face_frame.second) <= 100) && checkProjection(face, face_frame.second, u_f, v_f)) {
-                writeFile(face, face_frame.second, u_f, v_f);
-                face_frame_idx[face_frame.first] = face_frame.second;
-
-                for (auto& f : nface) {
-                    if (face_frame_idx[f] == -2) {
-                        face_frame_idx[f] = -1;
-                        qu_face.push(std::make_pair(f, face_frame.second));
-                    }
-                }
-                continue;
-            }
-
-
-            for (int k = poly_frame_st; k <= poly_frame_end; ++k) {
-                if (checkProjection(face, k, u_f, v_f)) {
-                    writeFile(face, k, u_f, v_f);
-                    face_frame_idx[face_frame.first] = k;
-
-                    for (auto& f : nface) {
-                        if (face_frame_idx[f] == -2) {
-                            face_frame_idx[f] = -1;
-                            qu_face.push(std::make_pair(f, k));
-                        }
-                    }
-                    break;
-                }
-            }
-        }
-    }
-    std::cout << "end..." << std::endl;
-}
-
-void texture_mesh_new(Offline_map_recorder& r3live_map_recorder, std::string input_mesh_name, std::string output_mesh_name, int smooth_factor = 10)
-{
-    cout << "Performaning the mesh texturing..." << endl;
-    cout << "Build Kd tree, please wait..." << endl;
-    build_pcl_kdtree(r3live_map_recorder);
-    cout << "Build Kd tree finish !" << endl;
-    pcl::PolygonMesh        mesh_obj, mesh_textured;
-    std::vector< int >      pointIdxNKNSearch(smooth_factor);
-    std::vector< float >    pointNKNSquaredDistance(smooth_factor);
-    pcl::PointCloud< MeshPointType > rgb_pointcloud;
-
-    cout << "Loading mesh to PCL polygon, please wait...." << endl;
-    cout << "Load mesh from file: " << input_mesh_name << endl;
-    pcl::io::loadOBJFile(input_mesh_name, mesh_obj);
-    pcl::fromPCLPointCloud2(mesh_obj.cloud, rgb_pointcloud);
-    cout << "Loading mesh finish: points = " << rgb_pointcloud.size() << ", mesh = " << mesh_obj.polygons.size() << ", " << r3live_map_recorder.m_pts_in_views_vec.size() << endl;
-
-    std::vector<int> pt_counts(r3live_map_recorder.m_image_pose_vec.size(), 0);
-    std::vector<int> pt_frame_st(rgb_pointcloud.points.size(), r3live_map_recorder.m_image_pose_vec.size() - 1);
-    std::vector<int> pt_frame_end(rgb_pointcloud.points.size(), 0);
-    for (int i = 0; i < rgb_pointcloud.points.size(); ++i)
-    {
-        if (kdtree.nearestKSearch(rgb_pointcloud.points[i], smooth_factor, pointIdxNKNSearch, pointNKNSquaredDistance) > 0) {
-            for (int j = 0; j < smooth_factor; ++j) {
-                int pt_index = pcl_pc_rgb->points[pointIdxNKNSearch[j]].label;
-                pt_frame_st[i] = std::min(pt_frame_st[i], r3live_map_recorder.m_global_map->m_rgb_pts_vec[pt_index]->m_frame_idx_st);
-                pt_frame_end[i] = std::max(pt_frame_end[i], r3live_map_recorder.m_global_map->m_rgb_pts_vec[pt_index]->m_frame_idx_end);
-            }
-        }
-    }
-    //for (int k = 0; k < r3live_map_recorder.m_image_pose_vec.size(); ++k) {
-    //    writeTextureSetting(k);
-    //}
-
-    auto checkProjection = [&](pcl::Vertices& pcl_vertex, int frame_idx, double* u_f, double* v_f, double* angle) -> bool {
-        std::shared_ptr< Image_frame > img_ptr = r3live_map_recorder.m_image_pose_vec[frame_idx];
-        if (!img_ptr->m_valid) return false;
-        for (int j = 0; j < pcl_vertex.vertices.size(); ++j) {
-            MeshPointType origin_pt = rgb_pointcloud.points[pcl_vertex.vertices[j]];
-            vec_3 pt = vec_3(origin_pt.x, origin_pt.y, origin_pt.z);
-            bool res = img_ptr->project_3d_point_in_this_img(pt, u_f[j], v_f[j], angle[j], nullptr, 1.0);
-            if (!res) {
-                return false;
-            }
-        }
-        return true;
-    };
-
-    auto getFrameRange = [&](pcl::Vertices& pcl_vertex, int &poly_frame_st, int &poly_frame_end) -> void {
-        poly_frame_st = 0;
-        poly_frame_end = r3live_map_recorder.m_image_pose_vec.size() - 1;
-        for (int j = 0; j < pcl_vertex.vertices.size(); ++j) {
-            poly_frame_st = std::max(poly_frame_st, pt_frame_st[pcl_vertex.vertices[j]]);
-            poly_frame_end = std::min(poly_frame_end, pt_frame_end[pcl_vertex.vertices[j]]);
-        }
-        //if (poly_frame_end < poly_frame_st) {
-        //    poly_frame_st = r3live_map_recorder.m_image_pose_vec.size() - 1;
-        //    poly_frame_end = 0;
-        //    for (int j = 0; j < pcl_vertex.vertices.size(); ++j) {
-        //        poly_frame_st = std::min(poly_frame_st, pt_frame_st[pcl_vertex.vertices[j]]);
-        //        poly_frame_end = std::max(poly_frame_end, pt_frame_end[pcl_vertex.vertices[j]]);
-        //    }
-        //}
-        for (int j = 0; j < pcl_vertex.vertices.size(); ++j) {
-            int frame = (pt_frame_st[pcl_vertex.vertices[j]] + pt_frame_end[pcl_vertex.vertices[j]]) / 2;
-            if (poly_frame_st < frame) poly_frame_st = frame;
-            if (poly_frame_end > frame) poly_frame_end = frame;
-        }
-        swap(poly_frame_st, poly_frame_end);
-    };
-
-    auto writeFile = [&](pcl::Vertices& pcl_vertex, int frame_idx, double* u_f, double* v_f) -> void {
-        char name[128] = { 0 };
-        sprintf(name, "./mesh/MeshTex_%04d.obj", frame_idx);
-        bool bExist = true;
-        std::ifstream ifs(name);
-        if (!ifs.good()) {
-            bExist = false;
-        }
-        ifs.close();
-        std::ofstream ofs(name, std::ios::app);
-        if (!bExist) {
-            sprintf(name, "mtllib ./../texture/MeshTex_%04d.mtl", frame_idx);
-            ofs << name << std::endl;
-        }
-        for (int j = 0; j < pcl_vertex.vertices.size(); ++j) {
-            MeshPointType origin_pt = rgb_pointcloud.points[pcl_vertex.vertices[j]];
-            ofs << "v " << origin_pt.x << " " << origin_pt.y << " " << origin_pt.z << std::endl;
-            pt_counts[frame_idx]++;
-        }
-        for (int j = 0; j < pcl_vertex.vertices.size(); ++j) {
-            ofs << "vt " << u_f[j] / 1920.0 << " " << 1 - v_f[j] / 1080.0 << /*" " << k << " " << u_f[j] << " " << v_f[j] << " " <<*/ endl;
-        }
-        ofs << "f " << pt_counts[frame_idx] - 2 << "/" << pt_counts[frame_idx] - 2 << " " << pt_counts[frame_idx] - 1 << "/" << pt_counts[frame_idx] - 1 << " " << pt_counts[frame_idx] << "/" << pt_counts[frame_idx] << endl;
-        ofs.close();
-    };
-
-    std::vector<vec_3> colors = { {255, 0, 0}, {0, 255, 0}, {0, 0, 255}, {255, 255, 0}, {255, 0, 255}, {0, 255, 255} };
-    colors.push_back({ 255, 0, 0 });
-    auto writeColor = [&](pcl::Vertices& pcl_vertex, int frame_idx) {
-        char name[128] = { 0 };
-        sprintf(name, "./mesh/MeshTex.obj");
-        std::ofstream ofs(name, std::ios::app);
-        for (int j = 0; j < pcl_vertex.vertices.size(); ++j) {
-            MeshPointType origin_pt = rgb_pointcloud.points[pcl_vertex.vertices[j]];
-            ofs << "v " << origin_pt.x << " " << origin_pt.y << " " << origin_pt.z << " ";
-            int idx = frame_idx % 6;
-            ofs << colors[idx].x() << " " << colors[idx].y() << " " << colors[idx].z() << std::endl;
-            pt_counts[0]++;
-        }
-        ofs << "f " << pt_counts[0] - 2 << " " << pt_counts[0] - 1 << " " << pt_counts[0] << endl;
-        ofs.close();
-    };
-
-    std::vector<std::unordered_set<int>> pt_frame_proj(rgb_pointcloud.points.size());
-    for (int i = 0; i < mesh_obj.polygons.size(); ++i) {
-        pcl::Vertices& pcl_vertex = mesh_obj.polygons[i];
-        double u_f[3] = { 0 }, v_f[3] = { 0 }, angle[3] = { 0 };
-        double smallestAngle = INT_MAX;
-        bool bValidPolygon = false;
-        int frame_idx = 0;
-        /*for (int j = 0; j < pcl_vertex.vertices.size(); ++j) {
-            auto idxSet = pt_frame_proj[pcl_vertex.vertices[j]];
-            for (auto frame_index : idxSet) {
-                if (checkProjection(pcl_vertex, frame_index, u_f, v_f)) {
-                    bValidPolygon = true;
-                    frame_idx = frame_index;
-                    break;
-                }
-            }
-            if (bValidPolygon) break;
-        }
-        
-        if (bValidPolygon) {
-            writeFile(pcl_vertex, frame_idx, u_f, v_f);
-            for (int j = 0; j < pcl_vertex.vertices.size(); ++j) {
-                pt_frame_proj[pcl_vertex.vertices[j]].insert(frame_idx);
-            }
-            continue;
-        }*/
-        
-        int poly_frame_st, poly_frame_end;
-        getFrameRange(pcl_vertex, poly_frame_st, poly_frame_end);
-        int frame_idx_final = -1;
-        for (int k = poly_frame_st; k <= poly_frame_end; ++k) {
-            std::shared_ptr< Image_frame > img_ptr = r3live_map_recorder.m_image_pose_vec[k];
-            double u_f_tmp[3] = { 0 }, v_f_tmp[3] = { 0 }, angle_tmp[3] = { 0 };
-            if (checkProjection(pcl_vertex, k, u_f, v_f, angle)) {
-                frame_idx_final = k;
-                break;
-            }
-            if (false && checkProjection(pcl_vertex, k, u_f_tmp, v_f_tmp, angle_tmp)) {
-                double aveAngle = (angle_tmp[0] + angle_tmp[1] + angle_tmp[2]) / 3;
-                if (frame_idx_final < 0 || aveAngle < smallestAngle ) {
-                    frame_idx_final = k;
-                    smallestAngle = aveAngle;
-                    for (int x = 0; x < 3; ++x) {
-                        u_f[x] = u_f_tmp[x];
-                        v_f[x] = v_f_tmp[x];
-                    }
-                }
-            }
-        }
-
-        if (frame_idx_final >= 0) {
-            //writeColor(pcl_vertex, frame_idx_final);
-            writeFile(pcl_vertex, frame_idx_final, u_f, v_f);
-            for (int j = 0; j < pcl_vertex.vertices.size(); ++j) {
-                pt_frame_proj[pcl_vertex.vertices[j]].insert(frame_idx_final);
-            }
-        }
-    }
-    cout << "texture_mesh end" << endl;
-}
-
 
 void texture_mesh(Offline_map_recorder& r3live_map_recorder, std::string input_mesh_name, std::string output_mesh_name, int smooth_factor)
 {
@@ -553,46 +174,27 @@ void texture_mesh(Offline_map_recorder& r3live_map_recorder, std::string input_m
     cout << "=== Mesh texturing finish ! ===" << endl;
 }
 
-void load_parameter(/*ros::NodeHandle& m_ros_node_handle*/)
+void load_parameter()
 {
-    std::string _offline_map_name = "test.r3live"; //"out_rawData.r3live";
-    //Common_tools::get_ros_parameter(m_ros_node_handle, "add_keyframe_R", g_add_keyframe_R, 10.0);
-    //Common_tools::get_ros_parameter(m_ros_node_handle, "add_keyframe_t", g_add_keyframe_t, 0.15);
-
-    //Common_tools::get_ros_parameter(m_ros_node_handle, "insert_pt_dis", g_insert_pt_dis, 1.0);
-    //Common_tools::get_ros_parameter(m_ros_node_handle, "if_use_free_space_support", g_if_use_free_space_support, false);
-    //Common_tools::get_ros_parameter(m_ros_node_handle, "thickness_factor", g_thickness_factor, 1.0);
-    //Common_tools::get_ros_parameter(m_ros_node_handle, "quality_factor", g_quality_factor, 0.0);
-    //Common_tools::get_ros_parameter(m_ros_node_handle, "decimate_mesh", g_decimate_mesh, 1.0);
-    //Common_tools::get_ros_parameter(m_ros_node_handle, "if_remove_spurious", g_if_remove_spurious, 40.0);
-    //Common_tools::get_ros_parameter(m_ros_node_handle, "if_remove_spikes", g_if_remove_spikes, true);
-    //Common_tools::get_ros_parameter(m_ros_node_handle, "close_holes_dist", g_close_holes_dist, 20);
-    //Common_tools::get_ros_parameter(m_ros_node_handle, "smooth_mesh_factor", g_smooth_mesh_factor, 5);
-    //Common_tools::get_ros_parameter(m_ros_node_handle, "working_dir", g_working_dir, std::string(Common_tools::get_home_folder()).append("/r3live_output"));
-    //Common_tools::get_ros_parameter(m_ros_node_handle, "offline_map_name", _offline_map_name, std::string("test_mid.r3live"));
-    //Common_tools::get_ros_parameter(m_ros_node_handle, "texturing_smooth_factor", g_texturing_smooth_factor, 10);
+    std::string _offline_map_name = "test.r3live"; 
     g_offline_map_name = std::string(g_working_dir).append("/").append(_offline_map_name);
 }
 
-int Reconstruction::reconstruct_main(/*int argc, char** argv*/)
-{
-
-    // system( "clear" );
-    //printf_program("R3LIVE_meshing");
-    //Common_tools::printf_software_version();
-    //ros::init(argc, argv, "R3LIVE_meshing");
-    //ros::NodeHandle m_ros_node_handle;
-    load_parameter(/*m_ros_node_handle*/);
-
+int Reconstruction::reconFromFile(const std::string& file) {
+    load_parameter();
     Global_map       global_map(0);
     Offline_map_recorder r3live_map_recorder;
     cout << "Open file from: " << g_offline_map_name << endl;
     global_map.m_if_reload_init_voxel_and_hashed_pts = 0;
     r3live_map_recorder.m_global_map = &global_map;
-
     Common_tools::load_obj_from_file(&r3live_map_recorder, g_offline_map_name);
-
     cout << "Number of rgb points: " << global_map.m_rgb_pts_vec.size() << endl;
+
+    return reconFromRecorder(r3live_map_recorder);
+}
+
+int Reconstruction::reconFromRecorder(Offline_map_recorder& r3live_map_recorder)
+{
     cout << "Size of frames: " << r3live_map_recorder.m_image_pose_vec.size() << endl;
     MVS::Mesh meshWithoutTex = reconstruct_mesh(r3live_map_recorder, g_working_dir);
     cout << "=== Reconstruct mesh finish ! ===" << endl;
@@ -600,9 +202,8 @@ int Reconstruction::reconstruct_main(/*int argc, char** argv*/)
     std::string input_mesh_name = std::string(g_working_dir).append("/reconstructed_mesh.obj");
     std::string output_mesh_name = std::string(g_working_dir).append("/textured_mesh.ply");
     texture_mesh(r3live_map_recorder, input_mesh_name, output_mesh_name, g_texturing_smooth_factor);
-    //texture_mesh_new(r3live_map_recorder, input_mesh_name, output_mesh_name);
-    texture_mesh_Others(meshWithoutTex, r3live_map_recorder, input_mesh_name, output_mesh_name);
-    //exit(0);
+
+    notifyFinish((g_working_dir)+("/reconstructed_mesh") + ".obj", true);
     return 0;
 }
 
@@ -640,9 +241,9 @@ void outputCamera(Offline_map_recorder& r3live_map_recorder) {
     std::ofstream ofs("./sparse/cameras.txt");
     ofs << "# Camera list with one line of data per camera:\n#   CAMERA_ID, MODEL, WIDTH, HEIGHT, PARAMS[]\n# Number of cameras : 1" << std::endl;
     ofs << "1 PINHOLE " << r3live_map_recorder.m_image_pose_vec[0]->m_img_cols << " " << r3live_map_recorder.m_image_pose_vec[0]->m_img_rows << " ";
-        ofs << r3live_map_recorder.m_image_pose_vec[0]->fx << " " << r3live_map_recorder.m_image_pose_vec[0]->fy << " " << r3live_map_recorder.m_image_pose_vec[0]->cx << " " << r3live_map_recorder.m_image_pose_vec[0]->cy << std::endl;
+    ofs << r3live_map_recorder.m_image_pose_vec[0]->fx << " " << r3live_map_recorder.m_image_pose_vec[0]->fy << " " << r3live_map_recorder.m_image_pose_vec[0]->cx << " " << r3live_map_recorder.m_image_pose_vec[0]->cy << std::endl;
     ofs.close();
-    
+
     std::unordered_map<int, std::unordered_map<int, int>> point2dIndex;
     ofs.open("./sparse/images.txt");
     char name[10] = { 0 };
@@ -735,7 +336,7 @@ void Reconstruction::r3live_map_to_mvs_scene(Offline_map_recorder& r3live_map_re
     m_platforms.cameras[0].R = Eigen::Matrix3d::Identity();
     m_platforms.cameras[0].C = Eigen::Vector3d::Zero();
 
-    std::unordered_map< std::shared_ptr< RGB_pts >, std::vector< int > > &m_pts_with_view = r3live_map_recorder.m_pts_with_view;
+    std::unordered_map< std::shared_ptr< RGB_pts >, std::vector< int > >& m_pts_with_view = r3live_map_recorder.m_pts_with_view;
     for (int frame_idx = 0; frame_idx < number_of_image_frame; frame_idx++)
     {
         std::shared_ptr< Image_frame > img_ptr = r3live_map_recorder.m_image_pose_vec[frame_idx];

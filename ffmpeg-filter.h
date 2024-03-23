@@ -181,7 +181,7 @@ extern "C" {
         }
         av_frame_unref(frame);
         avfilter_graph_free(&filter_graph);
-
+        
         return 0;
     }
 

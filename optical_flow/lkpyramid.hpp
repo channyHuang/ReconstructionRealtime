@@ -7,7 +7,6 @@
 #define CV_CPU_HAS_SUPPORT_SSE2 1
 #define USING_OPENCV_TBB 1
 #include "opencv2/core/hal/intrin.hpp"
-//#include "tools_logger.hpp"
 #include "tools_timer.hpp"
 #include <numeric>
 #include <future>

@@ -2,17 +2,13 @@
 
 #include "osgManager.h"
 
-GLuint textureID;
-
 #include "reconstruct.h"
+#include "r3live.hpp"
+#include "parseBag.h"
+#include "airsimManager.h"
 
 Reconstruction::Reconstruction()
 {
-    //notifyPoint.connect(OsgManager::getInstance(), &OsgManager::addPoint);
-    //notifyPoints.connect(OsgManager::getInstance(), &OsgManager::addPoints);
-    //notifyPose.connect(OsgManager::getInstance(), &OsgManager::addPose);
-    //notifyEdge.connect(OsgManager::getInstance(), &OsgManager::addEdge);
-    //notifyFaces.connect(OsgManager::getInstance(), &OsgManager::addTri);
 }
 
 
@@ -24,6 +20,8 @@ ImguiMainPage::ImguiMainPage(osgViewer::Viewer& viewer, osg::ref_ptr< CameraHand
     pviewer = &viewer;
     m_pCameraHandler = pCameraHandler;
     OsgManager::getInstance()->setViewer(viewer);
+
+    AirSimManager::getInstance();
 }
 
 ImguiMainPage::~ImguiMainPage() {
@@ -41,41 +39,39 @@ void ImguiMainPage::drawUi() {
         ImGui::SliderInt("Axis x y z", &m_pCameraHandler->axis, 0, 3);
     }
     if (ImGui::BeginTabBar("Functions", ImGuiTabBarFlags_None))
-    {
-        if (ImGui::BeginTabItem("test1"))
-        {
-            if (ImGui::Button("show in glsl")) {
-                OsgManager::getInstance()->show("E:/projects/r3live-lab-res/textured_mesh.obj", false);
-            }
-            ImGui::EndTabItem();
-        }
-        if (ImGui::BeginTabItem("test show model"))
-        {
-            if (ImGui::Button("show in osg")) {
-                OsgManager::getInstance()->show("E:/projects/r3live-lab-res/textured_mesh.obj");
-            }
-            ImGui::EndTabItem();
-        }
-        
+    {   
         if (ImGui::BeginTabItem("parse bag and reconstruct"))
         {
-            //std::string fileName = "D:/dataset/lab/c2_lvi/20230630-obs-lvi.bag";
-            //std::string fileName = "D:/dataset/lab/c2_lvi/20230607lvi.bag";
-            std::string fileName = "D:/dataset/lab/c2_lvi/20230630-object-lvi.bag";
-
-            //if (ImGui::Button("parse header")) {
-            //    ParseBag::getInstance()->parseBag(fileName);
-            //}
-
             if (ImGui::Button("reconstruct point map")) {
                 std::thread thread([]() {
-                    Reconstruction::getInstance()->reconstruct_points();
+                    Eigen::initParallel();
+                    R3LIVE* fast_lio_instance = new R3LIVE();
+
+                    //ParseBag::getInstance()->notifyImu.connect(fast_lio_instance, &R3LIVE::imu_cbk);
+                    //ParseBag::getInstance()->notifyImage.connect(fast_lio_instance, &R3LIVE::image_comp_callback);
+                    //ParseBag::getInstance()->notifyPoints.connect(fast_lio_instance, &R3LIVE::feat_points_cbk);
+
+                    std::string fileName = "D:/dataset/lab/c2_lvi/20230607lvi.bag";
+                    ParseBag::getInstance()->parseBag(fileName);
                     });
                 thread.detach();
             }
             if (ImGui::Button("reconstruct mesh")) {
                 std::thread thread([]() {
-                    Reconstruction::getInstance()->reconstruct_main();
+                    Reconstruction::getInstance()->reconFromFile("");
+                    });
+                thread.detach();
+            }
+            if (ImGui::Button("read from UE")) {
+                std::thread thread([]() {
+                    Eigen::initParallel();
+                    R3LIVE* fast_lio_instance = new R3LIVE();
+
+                    AirSimManager::getInstance()->notifyImu.connect(fast_lio_instance, &R3LIVE::imu_cbk);
+                    AirSimManager::getInstance()->notifyImage.connect(fast_lio_instance, &R3LIVE::image_comp_callback);
+                    AirSimManager::getInstance()->notifyPoints.connect(fast_lio_instance, &R3LIVE::feat_points_cbk);
+
+                    AirSimManager::getInstance()->run();
                     });
                 thread.detach();
             }

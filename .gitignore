@@ -7,3 +7,6 @@ osgReconRealtime.vcxproj.*
 *.r3live
 *.mtl
 
+build/*
+bin/*
+.vscode

@@ -13,6 +13,7 @@
 #include <osg/Texture2D>
 #include <osg/PolygonMode>
 #include <osg/BindImageTexture>
+#include <osg/MatrixTransform>
 
 class OsgManager
 {

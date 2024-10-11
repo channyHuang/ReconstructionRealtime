@@ -1,24 +1,23 @@
 FILE(GLOB_RECURSE LIBRARY_FILES_C "*.cpp" "*.hpp")
 FILE(GLOB_RECURSE LIBRARY_FILES_H "*.h" "*.inl")
 
-set(projectName tools)
-project(${projectName})
+project(tools)
 
 find_package(Eigen3 REQUIRED)
 
-include_directories(${projectName}
+include_directories(${PROJECT_NAME}
     ${EIGEN3_INCLUDE_DIR}
 )
 
-link_directories(${projectName}
+link_directories(${PROJECT_NAME}
 
     )
 
-add_library(${projectName}
+add_library(${PROJECT_NAME}
 ${LIBRARY_FILES_C} 
 ${LIBRARY_FILES_H}
 )
 
-TARGET_LINK_LIBRARIES(${projectName} 
+TARGET_LINK_LIBRARIES(${PROJECT_NAME} 
 
 )

@@ -26,6 +26,10 @@
 #endif
 #endif
 
+#ifdef __linux__
+#define LOG(...) printf(__VA_ARGS__)
+#endif
+
 #if TD_VERBOSE == TD_VERBOSE_OFF
 #define VERBOSE LOG
 #define DEBUG_LEVEL(n,...)

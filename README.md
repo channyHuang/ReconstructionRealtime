@@ -6,7 +6,7 @@ Using AirSim to generate and get scene data, include IMU、Lidar、RGB image dat
 * **OpenSceneGraph** (show)
 * **GLFW3** (imgui as ui)
 * **OpenCV** (read image from scene)
-* **PCL** (R3LIVE required)
+* **PCL** (R3LIVE required for point cloud operation)
 * **Boost** (R3LIVE required)
 * **Eigen3** (R3LIVE required)
 * **ffmpeg** (image processing)
@@ -34,12 +34,22 @@ set(OUTER_DIR ${CMAKE_SOURCE_DIR}/../commonClass)
 ```
 use to set path of `commonClass` folder
 
-# Notes
+# Notes 笔记
+模块
 ## Optical_flow
 Image feature tracker using OpenCV. Lidar points project to image to get m_current_tracked_pts in current image frame, than calculate fundamental matrix and frame pose.
+
+使用OpenCV的光流跟踪算法。
 
 ## loam
 IMU processing. **But** IMU data in AirSim seems to be error or drift obviously...
 
 ## meshing
 Mesh Reconstruction is similar to openMVS. 
+
+## rgb_map
+根据相邻图像和点云帧的相对位姿从图像中取映射像素的RGB值赋值到点云中的每个点
+
+## tools
+K-D树、序列化、定时器等的具体实现
+

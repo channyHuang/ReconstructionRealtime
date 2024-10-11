@@ -89,18 +89,19 @@ void AirSimManager::getLidarData() {
     msg->header.stamp.sec = lidarData.time_stamp / 1000000000;
     msg->header.stamp.nsec = lidarData.time_stamp % 1000000000;
     int len = lidarData.point_cloud.size();
+
     for (int i = 0; i < len; i += 3) { 
-        pcl::PointXYZINormal pt(lidarData.point_cloud[i], lidarData.point_cloud[i + 1], lidarData.point_cloud[i + 2]);;
+        //pcl::PointXYZINormal pt(lidarData.point_cloud[i], lidarData.point_cloud[i + 1], lidarData.point_cloud[i + 2]);;
         
         //double frame_dis = sqrt(pt.x * pt.x + pt.y * pt.y + pt.z * pt.z);
         //if (frame_dis > 5)
         //{
         //    continue;
         //}
-        pt.intensity = 1.0f;
-        pt.curvature = 0;
+        // pt.intensity = 1.0f;
+        // pt.curvature = 0;
 
-        msg->pcl_pc.push_back(pt);
+        // msg->pcl_pc.push_back(pt);
     }
     if (msg->pcl_pc.size() <= 0) {
         std::cout << __FUNCTION__ << " " << " has no point" << std::endl;

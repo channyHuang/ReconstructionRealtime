@@ -2,6 +2,7 @@
 
 #include "commonOsg/OsgImguiHandler.h"
 #include "commonOsg/osgPickHandler.h"
+#include "commonOsg/osgCameraHandler.h"
 
 #include <osgViewer/Viewer>
 #include <osgDB/ReadFile>

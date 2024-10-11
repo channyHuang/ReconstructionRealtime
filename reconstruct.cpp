@@ -74,8 +74,12 @@ std::string strConfigFileName;
 int         g_min_N_rgb = 5;
 
 #define MeshPointType pcl::PointXYZRGBL
+#if defined(_WIN32)
+pcl::PointCloud<MeshPointType>::Ptr pcl_pc_rgb = nullptr;
+#else
 //using PointType = pcl::PointXYZRGBL; // pcl::PointXYZRGBA;
 pcl::PointCloud<MeshPointType>::Ptr pcl_pc_rgb = nullptr;
+#endif
 pcl::KdTreeFLANN<MeshPointType> kdtree;
 
 Reconstruction* Reconstruction::instance = nullptr;
@@ -84,8 +88,11 @@ void build_pcl_kdtree(Offline_map_recorder& r3live_map_recorder)
 {
     if (pcl_pc_rgb == nullptr)
     {
-        //pcl_pc_rgb = boost::make_shared< pcl::PointCloud< PointType > >();
+#if defined(_WIN32)
         pcl_pc_rgb = std::make_shared< pcl::PointCloud< MeshPointType > >();
+#else
+        pcl_pc_rgb = boost::make_shared< pcl::PointCloud<MeshPointType > >();
+#endif
     }
     if (0) // if reload all pts.
     {
@@ -391,8 +398,11 @@ void Reconstruction::r3live_map_to_mvs_scene(Offline_map_recorder& r3live_map_re
     long temp_int = 0;
     if (pcl_pc_rgb == nullptr)
     {
-        //pcl_pc_rgb = boost::make_shared<pcl::PointCloud<PointType>>();
+#if defined(_WIN32)
         pcl_pc_rgb = std::make_shared<pcl::PointCloud<MeshPointType>>();
+#else
+        pcl_pc_rgb = boost::make_shared<pcl::PointCloud<MeshPointType>>();
+#endif
     }
     pcl_pc_rgb->clear();
     pcl_pc_rgb->reserve(1e8);

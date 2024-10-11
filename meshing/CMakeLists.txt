@@ -1,3 +1,23 @@
+CMAKE_MINIMUM_REQUIRED(VERSION 3.8.2)
+
+project(meshing)
+
+find_package(Eigen3 REQUIRED)
+find_package(Boost REQUIRED)
+find_package(OpenCV REQUIRED)
+
+add_definitions(-D_USE_BOOST)
+add_definitions(-D_USE_EIGEN)
+
+# includes
+if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    find_package(CGAL REQUIRED)
+	set(CGAL_DIR "/usr/include/" CACHE PATH "")
+else()
+	set(CGAL_DIR "E:/thirdLibs/CGAL-5.4-beta1/include" CACHE PATH "")
+endif()
+
+# files
 FILE(GLOB_RECURSE LIBRARY_FILES_C "*.hpp")
 FILE(GLOB LIBRARY_FILES_H "*.h" )
 
@@ -22,39 +42,27 @@ FILE(GLOB LIBRARY_FILES
     
 source_group(Common FILES ${COMMON_FILES})
 
-set(projectName meshing)
-project(${projectName})
-
-find_package(Eigen3 REQUIRED)
-find_package(Boost REQUIRED)
-find_package(OpenCV REQUIRED)
-
-add_definitions(-D_USE_BOOST)
-add_definitions(-D_USE_EIGEN)
-set(CGAL_DIR "E:/thirdLibs/CGAL-5.4-beta1/include" CACHE PATH "")
-
-
-
-include_directories(${projectName}
+# path
+include_directories(${PROJECT_NAME}
     ${CGAL_DIR}
-    ${OpenCV_INCLUDE_DIRS}
-    ${Boost_INCLUDE_DIRS}
     ${EIGEN3_INCLUDE_DIR}
+    ${Boost_INCLUDE_DIRS}
+    ${OpenCV_INCLUDE_DIRS}
     ./../tools
     ./
     )
 
-link_directories(${projectName}
+link_directories(${PROJECT_NAME}
     ${Boost_LIBRARY_DIRS}
     )
 
-add_library(${projectName}
-${COMMON_FILES}
-${MESH_FILES}
-${LIBRARY_FILES}
+add_library(${PROJECT_NAME}
+    ${COMMON_FILES}
+    ${MESH_FILES}
+    ${LIBRARY_FILES}
 )
 
-TARGET_LINK_LIBRARIES(${projectName} 
-    ${OpenCV_LIBS}
-    ${Boost_LIBRARIES}
+TARGET_LINK_LIBRARIES(${PROJECT_NAME} 
+${OpenCV_LIBS}    
+${Boost_LIBRARIES}
 )

@@ -5,7 +5,6 @@
 #include "reconstruct.h"
 #include "r3live.hpp"
 #include "parseBag.h"
-#include "airsimManager.h"
 
 Reconstruction::Reconstruction()
 {
@@ -20,8 +19,6 @@ ImguiMainPage::ImguiMainPage(osgViewer::Viewer& viewer, osg::ref_ptr< CameraHand
     pviewer = &viewer;
     m_pCameraHandler = pCameraHandler;
     OsgManager::getInstance()->setViewer(viewer);
-
-    AirSimManager::getInstance();
 }
 
 ImguiMainPage::~ImguiMainPage() {
@@ -33,11 +30,7 @@ void ImguiMainPage::drawUi() {
     if (ImGui::Button("Switch Scene")) {
         OsgManager::getInstance()->switchScene();
     }
-    ImGui::Checkbox("Rotate By Axis", &m_pCameraHandler->bRotateByAxis);
-    if (m_pCameraHandler->bRotateByAxis) {
-        ImGui::Text("Rotate by axis: 0-x, 1-y, 2-z");
-        ImGui::SliderInt("Axis x y z", &m_pCameraHandler->axis, 0, 3);
-    }
+
     if (ImGui::BeginTabBar("Functions", ImGuiTabBarFlags_None))
     {   
         if (ImGui::BeginTabItem("parse bag and reconstruct"))
@@ -67,11 +60,11 @@ void ImguiMainPage::drawUi() {
                     Eigen::initParallel();
                     R3LIVE* fast_lio_instance = new R3LIVE();
 
-                    AirSimManager::getInstance()->notifyImu.connect(fast_lio_instance, &R3LIVE::imu_cbk);
-                    AirSimManager::getInstance()->notifyImage.connect(fast_lio_instance, &R3LIVE::image_comp_callback);
-                    AirSimManager::getInstance()->notifyPoints.connect(fast_lio_instance, &R3LIVE::feat_points_cbk);
+                    // AirSimManager::getInstance()->notifyImu.connect(fast_lio_instance, &R3LIVE::imu_cbk);
+                    // AirSimManager::getInstance()->notifyImage.connect(fast_lio_instance, &R3LIVE::image_comp_callback);
+                    // AirSimManager::getInstance()->notifyPoints.connect(fast_lio_instance, &R3LIVE::feat_points_cbk);
 
-                    AirSimManager::getInstance()->run();
+                    // AirSimManager::getInstance()->run();
                     });
                 thread.detach();
             }

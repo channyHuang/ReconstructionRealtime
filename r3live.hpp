@@ -340,10 +340,17 @@ public:
         m_thread_pool_ptr = std::make_shared<Common_tools::ThreadPool>(6, true, false); // At least 5 threads are needs, here we allocate 6 threads.
         m_map_rgb_pts.set_minmum_dis(m_minumum_rgb_pts_size);
         m_map_rgb_pts.m_recent_visited_voxel_activated_time = m_recent_visited_voxel_activated_time;
-        featsFromMap = std::make_shared<PointCloudXYZINormal>(); // boost::make_shared<PointCloudXYZINormal>();
-        cube_points_add = std::make_shared<PointCloudXYZINormal>();// boost::make_shared<PointCloudXYZINormal>();
-        laserCloudFullRes2 = std::make_shared<PointCloudXYZINormal>(); // boost::make_shared<PointCloudXYZINormal>();
-        laserCloudFullResColor = std::make_shared<pcl::PointCloud<pcl::PointXYZI>>(); // boost::make_shared<pcl::PointCloud<pcl::PointXYZI>>();
+#if defined(_WIN32)
+        featsFromMap = std::make_shared<PointCloudXYZINormal>();
+        cube_points_add = std::make_shared<PointCloudXYZINormal>();
+        laserCloudFullRes2 = std::make_shared<PointCloudXYZINormal>();
+        laserCloudFullResColor = std::make_shared<pcl::PointCloud<pcl::PointXYZI>>();
+#else
+        featsFromMap = boost::make_shared<PointCloudXYZINormal>(); 
+        cube_points_add =  boost::make_shared<PointCloudXYZINormal>();
+        laserCloudFullRes2 = boost::make_shared<PointCloudXYZINormal>();
+        laserCloudFullResColor = boost::make_shared<pcl::PointCloud<pcl::PointXYZI>>();
+#endif
 
         XAxisPoint_body = Eigen::Vector3f(LIDAR_SP_LEN, 0.0, 0.0);
         XAxisPoint_world = Eigen::Vector3f(LIDAR_SP_LEN, 0.0, 0.0);

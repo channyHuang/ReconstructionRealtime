@@ -8,7 +8,7 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
-
+/*
 extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
@@ -50,7 +50,7 @@ extern "C" {
         }
         frame->width = width;
         frame->height = height;
-        frame->format = /*AV_PIX_FMT_BGR24;*/ AV_PIX_FMT_YUV420P;
+        frame->format = AV_PIX_FMT_YUV420P; // AV_PIX_FMT_BGR24; ;
         frame->pts = 0;
         frame->best_effort_timestamp = 0;
         frame->time_base.num = 1;
@@ -119,7 +119,7 @@ extern "C" {
             return -1;
         }
 
-        /* buffer video source: the decoded frames from the decoder will be inserted here. */
+        // buffer video source: the decoded frames from the decoder will be inserted here. 
         snprintf(args, sizeof(args),
             "video_size=%dx%d:pix_fmt=%d:time_base=%d/%d:pixel_aspect=%d/%d",
             frame->width, frame->height, frame->format,
@@ -133,7 +133,7 @@ extern "C" {
             return ret;
         }
 
-        /* buffer video sink: to terminate the filter chain. */
+        // buffer video sink: to terminate the filter chain. 
         ret = avfilter_graph_create_filter(&buffersink_ctx, buffersink, "out",
             NULL, NULL, filter_graph);
         if (ret < 0) {
@@ -141,7 +141,7 @@ extern "C" {
             return ret;
         }
 
-        /* Endpoints for the filter graph. */
+        // Endpoints for the filter graph. 
         outputs->name = av_strdup("in");
         outputs->filter_ctx = buffersrc_ctx;
         outputs->pad_idx = 0;
@@ -191,3 +191,4 @@ extern "C" {
         return imageFilter(cvFrame);
     }
 }
+*/
